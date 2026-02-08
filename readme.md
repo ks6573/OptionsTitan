@@ -17,6 +17,7 @@ OptionsTitan analyzes market data and recommends optimal options strategies tail
 - 💡 **Strategy Recommendations**: Top 5 ranked strategies with detailed reasoning
 - 🎨 **Modern GUI**: Beautiful PySide6 interface with tabbed results
 - ✨ **Meta LLAMA AI**: Optional AI-powered market insights and personalized commentary
+- 📊 **Multi-Year Data**: ThetaData integration for institutional-grade historical options data (NEW)
 
 ---
 
@@ -90,6 +91,49 @@ This runs the complete pipeline: data preprocessing, feature engineering, 5-mode
 
 ---
 
+## 📊 Advanced: Multi-Year Data Collection (NEW)
+
+**Scale your models with institutional-grade historical options data.**
+
+OptionsTitan now supports fetching multi-year, multi-ticker options data using ThetaData for training more robust models.
+
+### What's Included
+
+- **45-Ticker Universe**: ETFs, Tech, Financials, Healthcare, Energy, Consumer stocks
+- **5+ Years of Data**: 2019-2024+ with full COVID coverage
+- **20 Contracts/Day**: Systematic sampling across strikes and expirations
+- **Auto-Normalization**: Stock splits, IV calculation, schema transformation
+- **Walk-Forward Validation**: 2019-2020→2021, 2019-2021→2022, etc.
+
+### Quick Start
+
+```bash
+# 1. Setup ThetaData Terminal (one-time)
+# See: docs/THETADATA_SETUP.md
+
+# 2. Test connection
+python -m src.data_collection.test_data_collection
+
+# 3. Fetch AAPL (POC - 15-30 minutes)
+python -m src.data_collection.data_fetcher --ticker AAPL --start 2019-01-01
+
+# 4. Fetch all 45 tickers (6-15 hours)
+./scripts/fetch_all_tickers.sh  # or .bat on Windows
+
+# 5. Train multi-ticker model
+python -m src.Training_MultiTicker
+```
+
+### Documentation
+
+- 📘 **[README_DATA_COLLECTION.md](README_DATA_COLLECTION.md)** - Complete overview
+- 🛠️ **[THETADATA_SETUP.md](docs/THETADATA_SETUP.md)** - Terminal installation
+- 📊 **[DATA_COLLECTION_GUIDE.md](docs/DATA_COLLECTION_GUIDE.md)** - Detailed usage guide
+
+**Note:** This is an advanced feature. The default Training.py with 60-day SPY data works great for getting started.
+
+---
+
 ## 🛠️ Troubleshooting
 
 **Import Errors:**
@@ -122,9 +166,9 @@ pip install -r requirements.txt
 - 🤖 **[LLAMA AI Setup](docs/llama/LLAMA_QUICKSTART.md)** - Enable AI insights (3-minute setup)
 - ⚙️ **[Advanced Configuration](docs/ADVANCED_CONFIGURATION.md)** - Customize risk profiles
 
-**Advanced:**
+**Advanced Features:**
+- 📊 **[Data Collection](README_DATA_COLLECTION.md)** - Multi-year ThetaData integration (NEW)
 - 📈 [Performance Guide](docs/PERFORMANCE_GUIDE.md) - Backtesting results
-- ⚙️ [Advanced Configuration](docs/ADVANCED_CONFIGURATION.md) - Customize settings
 - 🔧 [Troubleshooting Guide](docs/TROUBLESHOOTING.md) - Fix common issues
 
 ---
@@ -133,18 +177,26 @@ pip install -r requirements.txt
 
 ```
 OptionsTitan/
-├── 📄 readme.md              # You are here
-├── 📄 GETTING_STARTED.md     # Complete setup guide
-├── 📄 QUICK_REFERENCE.md     # Command reference
-├── 🐍 main.py                # AI training pipeline
-├── 🎨 options_gui_qt.py      # Modern GUI (recommended)
-├── 🎨 options_gui.py         # Classic GUI
-├── 📂 src/                   # Core AI modules
-├── 📂 ui/                    # Qt UI components
-├── 📂 scripts/               # Launcher scripts
-└── 📂 docs/                  # Documentation
-    ├── gui/                  # GUI tutorials
-    └── llama/                # AI setup guides
+├── 📄 readme.md                    # You are here
+├── 📄 GETTING_STARTED.md           # Complete setup guide
+├── 📄 QUICK_REFERENCE.md           # Command reference
+├── 📄 README_DATA_COLLECTION.md    # ThetaData integration (NEW)
+├── 🐍 main.py                      # AI training pipeline
+├── 🎨 options_gui_qt.py            # Modern GUI (recommended)
+├── 🎨 options_gui.py               # Classic GUI
+├── 📂 src/                         # Core AI modules
+│   ├── Training.py                 # Original training (60-day SPY)
+│   ├── Training_MultiTicker.py     # Multi-ticker training (NEW)
+│   └── data_collection/            # ThetaData integration (NEW)
+├── 📂 ui/                          # Qt UI components
+├── 📂 scripts/                     # Launcher scripts
+│   ├── fetch_all_tickers.sh        # Data collection (NEW)
+│   └── fetch_all_tickers.bat       # Data collection (NEW)
+└── 📂 docs/                        # Documentation
+    ├── gui/                        # GUI tutorials
+    ├── llama/                      # AI setup guides
+    ├── THETADATA_SETUP.md          # Terminal setup (NEW)
+    └── DATA_COLLECTION_GUIDE.md    # Collection guide (NEW)
 ```
 
 ---
@@ -159,10 +211,16 @@ OptionsTitan/
 
 ## 🎯 Quick Links
 
+**Getting Started:**
 - 📖 [Getting Started](GETTING_STARTED.md) - Complete setup guide
 - 📋 [Quick Reference](QUICK_REFERENCE.md) - Command cheat sheet
 - 🎨 [GUI Tutorial](docs/gui/GUI_GUIDE.md) - Learn the interface
+
+**Optional Features:**
 - 🤖 [Enable AI](docs/llama/LLAMA_QUICKSTART.md) - LLAMA setup
+- 📊 [Data Collection](README_DATA_COLLECTION.md) - Multi-year ThetaData (NEW)
+
+**Support:**
 - 🔧 [Troubleshooting](docs/TROUBLESHOOTING.md) - Fix issues
 
 ---

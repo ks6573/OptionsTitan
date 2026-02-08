@@ -29,6 +29,19 @@ yfinance>=0.2.18           # Yahoo Finance market data
 ta>=0.10.2                 # Technical analysis indicators
 
 # -------------------------------------------------------------------
+# DATA COLLECTION & STORAGE (Required for Multi-Ticker Data)
+# -------------------------------------------------------------------
+requests>=2.31.0           # HTTP client for ThetaData REST API
+pyarrow>=14.0.0            # Parquet file format (columnar storage)
+fastparquet>=2023.10.0     # Alternative Parquet engine (optional)
+
+# -------------------------------------------------------------------
+# OPTIONS PRICING (Required for IV Calculation)
+# -------------------------------------------------------------------
+py_vollib>=1.0.1           # Black-Scholes and implied volatility
+                           # Used by data_normalizer.py for IV calculation
+
+# -------------------------------------------------------------------
 # OPTIMIZATION (Required for Training)
 # -------------------------------------------------------------------
 optuna>=3.0.0              # Hyperparameter optimization
@@ -100,6 +113,9 @@ shap>=0.14.0               # SHAP values for model interpretability
 #
 # Verify Installation:
 #   python -c "import pandas, numpy, yfinance, xgboost, lightgbm, sklearn, PySide6; print('✅ All core dependencies installed!')"
+#
+# Verify Data Collection Dependencies:
+#   python -c "import requests, pyarrow, py_vollib; print('✅ Data collection dependencies installed!')"
 #
 # ===================================================================
 
