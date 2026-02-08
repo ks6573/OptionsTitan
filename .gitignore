@@ -1,0 +1,299 @@
+# ===================================================================
+# Python
+# ===================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytestdebug.log
+
+# ===================================================================
+# Virtual Environments
+# ===================================================================
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+pythonenv*
+
+# ===================================================================
+# IDE & Editors
+# ===================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ===================================================================
+# Jupyter Notebook
+# ===================================================================
+.ipynb_checkpoints
+*.ipynb
+profile_default/
+ipython_config.py
+
+# ===================================================================
+# Models, Data & Artifacts
+# ===================================================================
+# Keep directory structure but ignore large files
+models/*.pkl
+models/*.h5
+models/*.pt
+models/*.pth
+models/*.ckpt
+models/*.joblib
+models/*.sav
+
+# Training artifacts
+artifacts/
+checkpoints/
+
+# Data files
+data/*.csv
+data/*.json
+data/*.parquet
+data/*.feather
+data/*.xlsx
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# Logs
+logs/*.log
+logs/*.txt
+*.log
+
+# ===================================================================
+# macOS
+# ===================================================================
+.DS_Store
+.DS_Store?
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.fseventsd
+.TemporaryItems
+.apdisk
+
+# ===================================================================
+# Windows
+# ===================================================================
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# ===================================================================
+# Linux
+# ===================================================================
+*~
+.directory
+.Trash-*
+.nfs*
+
+# ===================================================================
+# Environment Variables (CRITICAL - Contains API Keys)
+# ===================================================================
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.test
+*.env
+
+# ===================================================================
+# Qt/PySide6 Specific
+# ===================================================================
+*.qmlc
+*.jsc
+*.pyqtc
+.qt/
+qt.conf
+
+# ===================================================================
+# Temporary Files
+# ===================================================================
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*.orig
+*~
+*.autosave
+
+# ===================================================================
+# Development & Internal Documentation
+# ===================================================================
+test_*.py
+TEST_*.py
+*_test.py
+*_COMPLETE.md
+*_SUMMARY.md
+*_UPDATE.md
+*_TESTING_GUIDE.md
+*_CHECKLIST.md
+*TESTING*.md
+INTERNAL_*.md
+DEV_*.md
+TODO_DEV.md
+
+# ===================================================================
+# Database Files
+# ===================================================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# ===================================================================
+# Compiled Files & Cache
+# ===================================================================
+*.pyc
+*.pyo
+*.pyd
+.Python
+__pypackages__/
+celerybeat-schedule
+celerybeat.pid
+
+# ===================================================================
+# Documentation Build
+# ===================================================================
+docs/_build/
+docs/_static/
+docs/_templates/
+site/
+
+# ===================================================================
+# Distribution / Packaging
+# ===================================================================
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ===================================================================
+# Security & Credentials
+# ===================================================================
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+credentials.json
+secrets.json
+.secrets/
+config/secrets.yaml
+
+# ===================================================================
+# Backup Files
+# ===================================================================
+*.backup
+*.old
+*.save
+backup/
+backups/
+
+# ===================================================================
+# Large Media Files (if any)
+# ===================================================================
+*.mp4
+*.avi
+*.mov
+*.mp3
+*.wav
+*.zip
+*.tar.gz
+*.rar
+
+# ===================================================================
+# Project Specific
+# ===================================================================
+# Keep the folders but not their large contents
+models/
+!models/.gitkeep
+logs/
+!logs/.gitkeep
+data/
+!data/.gitkeep
+artifacts/
+!artifacts/.gitkeep

@@ -1,0 +1,107 @@
+# ===================================================================
+# OptionsTitan Requirements - Python 3.7+
+# ===================================================================
+#
+# Installation: pip install -r requirements.txt
+#
+# Core dependencies are required for all functionality.
+# Optional dependencies enhance specific features.
+# ===================================================================
+
+# -------------------------------------------------------------------
+# CORE DATA SCIENCE & ML (Required)
+# -------------------------------------------------------------------
+pandas>=2.0.0              # Data manipulation and analysis
+numpy>=1.24.0              # Numerical computing
+scipy>=1.10.0              # Scientific computing and statistics
+
+# -------------------------------------------------------------------
+# MACHINE LEARNING MODELS (Required)
+# -------------------------------------------------------------------
+scikit-learn>=1.3.0        # Machine learning algorithms
+xgboost>=1.7.0             # XGBoost ensemble model
+lightgbm>=4.0.0            # LightGBM ensemble model
+
+# -------------------------------------------------------------------
+# FINANCIAL DATA (Required)
+# -------------------------------------------------------------------
+yfinance>=0.2.18           # Yahoo Finance market data
+ta>=0.10.2                 # Technical analysis indicators
+
+# -------------------------------------------------------------------
+# OPTIMIZATION (Required for Training)
+# -------------------------------------------------------------------
+optuna>=3.0.0              # Hyperparameter optimization
+
+# -------------------------------------------------------------------
+# MODERN GUI - Qt Version (Recommended)
+# -------------------------------------------------------------------
+PySide6>=6.6.0             # Qt for Python bindings
+PySide6-Addons>=6.6.0      # Additional Qt widgets
+
+# Note: Classic Tkinter GUI uses built-in tkinter (no installation needed)
+
+# -------------------------------------------------------------------
+# ENVIRONMENT MANAGEMENT (Strongly Recommended)
+# -------------------------------------------------------------------
+python-dotenv>=1.0.0       # Auto-load .env file for API keys
+                           # Both GUIs use this for LLAMA_API_KEY
+
+# -------------------------------------------------------------------
+# MODEL EXPLAINABILITY (Recommended)
+# -------------------------------------------------------------------
+shap>=0.14.0               # SHAP values for model interpretability
+                           # Used by model_explainability.py
+
+# -------------------------------------------------------------------
+# AI ENHANCEMENT (Optional - Requires API Key)
+# -------------------------------------------------------------------
+# llama-api-client>=1.0.0  # Meta LLAMA AI for intelligent insights
+                           # Uncomment if you have LLAMA API access
+                           # Get API key from: https://api.llama.com/
+
+# ===================================================================
+# BUILT-IN MODULES (No Installation Needed)
+# ===================================================================
+# The following are included with Python 3.7+:
+# - tkinter (GUI framework - usually included)
+# - pickle (model serialization)
+# - logging (execution logs)
+# - datetime (date/time handling)
+# - typing (type hints)
+# - warnings (warning control)
+# - os, sys, pathlib (file system)
+# - threading (background tasks)
+# - json (JSON parsing)
+#
+# If tkinter is missing, install:
+# - Ubuntu/Debian: sudo apt-get install python3-tk
+# - macOS: brew install python-tk
+# - Windows: Usually included with Python installer
+# ===================================================================
+
+# ===================================================================
+# INSTALLATION NOTES
+# ===================================================================
+#
+# Quick Start:
+#   pip install -r requirements.txt
+#
+# With Optional LLAMA AI:
+#   1. Uncomment llama-api-client line above
+#   2. pip install -r requirements.txt
+#   3. Set LLAMA_API_KEY in .env file
+#
+# Development/Testing:
+#   pip install -e .  (if setup.py exists)
+#
+# Upgrade All:
+#   pip install --upgrade -r requirements.txt
+#
+# Verify Installation:
+#   python -c "import pandas, numpy, yfinance, xgboost, lightgbm, sklearn, PySide6; print('✅ All core dependencies installed!')"
+#
+# ===================================================================
+
+
+
