@@ -14,7 +14,15 @@ fi
 
 # Step 1: Install LLAMA API client
 echo "📦 Step 1: Installing LLAMA API client..."
-pip3 install llama-api-client
+
+# Check if uv is available
+if command -v uv &> /dev/null; then
+    echo "Using uv for installation..."
+    uv pip install llama-api-client
+else
+    echo "Using pip for installation..."
+    pip3 install llama-api-client
+fi
 
 if [ $? -eq 0 ]; then
     echo "✅ LLAMA API client installed successfully"

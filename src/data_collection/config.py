@@ -4,10 +4,13 @@ Data Collection Configuration
 Defines the ticker universe, sampling parameters, and date ranges for
 multi-year historical options data collection.
 
-Based on GPT-5 recommendations for diverse market coverage:
-- 45 tickers across sectors and volatility regimes
-- 20 contracts per trading day per ticker
-- 2019-2024 historical range (5+ years including COVID)
+**MIGRATED TO FREE DATA SOURCE (philippdubach/options-data)**
+- 104 tickers available (2008-2025)
+- Remote query with predicate pushdown (no full downloads)
+- Pre-calculated Greeks and implied volatility
+- Zero cost, zero authentication, zero setup
+
+Based on GPT-5 recommendations for production-grade data collection.
 """
 
 from typing import Dict, List, Tuple
@@ -162,31 +165,94 @@ DATA_RANGE: Dict[str, str] = {
 }
 
 # ============================================================================
-# THETADATA API CONFIGURATION
+# PARQUET DATASET CONFIGURATION (PRIMARY - philippdubach/options-data)
 # ============================================================================
 
-THETADATA_CONFIG: Dict = {
-    # ThetaData Terminal REST API endpoint
-    'base_url': 'http://127.0.0.1:25510',
+PARQUET_CONFIG: Dict = {
+    # Base URL for philippdubach dataset (Cloudflare R2)
+    'base_url': 'https://static.philippdubach.com/data/options',
     
-    # API version
-    'api_version': 'v2',
+    # Dataset metadata
+    'dataset_snapshot_date': '2025-12-16',  # Last update of dataset
+    'dataset_version': 'v1',
+    'total_tickers': 104,
+    'date_range': ('2008-01-02', '2025-12-16'),
     
-    # Rate limiting (requests per second)
-    # Free tier: ~10/sec, Standard: ~100/sec
-    'rate_limit_rps': 10,  # Conservative default
+    # Available tickers (104 total - lowercase)
+    'available_tickers': [
+        "aapl", "abbv", "abt", "acn", "adbe", "aig", "amd", "amgn", "amt", "amzn",
+        "avgo", "axp", "ba", "bac", "bk", "bkng", "blk", "bmy", "brk.b", "c",
+        "cat", "cl", "cmcsa", "cof", "cop", "cost", "crm", "csco", "cvs", "cvx",
+        "de", "dhr", "dis", "duk", "emr", "fdx", "gd", "ge", "gild", "gm",
+        "goog", "googl", "gs", "hd", "hon", "ibm", "intu", "isrg", "iwm", "jnj",
+        "jpm", "ko", "lin", "lly", "lmt", "low", "ma", "mcd", "mdlz", "mdt",
+        "met", "meta", "mmm", "mo", "mrk", "ms", "msft", "nee", "nflx", "nke",
+        "now", "nvda", "orcl", "pep", "pfe", "pg", "pltr", "pm", "pypl", "qcom",
+        "qqq", "rtx", "sbux", "schw", "so", "spg", "spy", "t", "tgt", "tmo",
+        "tmus", "tsla", "txn", "uber", "unh", "unp", "ups", "usb", "v", "vix",
+        "vz", "wfc", "wmt", "xom"
+    ],
     
-    # Retry configuration
-    'max_retries': 3,
-    'retry_delay': 1.0,  # seconds
-    'backoff_factor': 2.0,  # Exponential backoff
-    
-    # Timeout configuration
-    'request_timeout': 30,  # seconds per request
-    
-    # Batch size for bulk fetching
-    'batch_size': 100,  # Contracts per batch
+    # Optional catalog file (if available)
+    'catalog_url': 'https://static.philippdubach.com/data/options/_catalog.parquet',
 }
+
+# ============================================================================
+# REMOTE QUERY FILTERS (Predicate Pushdown Configuration)
+# ============================================================================
+
+QUERY_FILTERS: Dict = {
+    # Days to Expiration (DTE) filters
+    'dte_min': 25,   # Minimum DTE (e.g., ~1 month)
+    'dte_max': 75,   # Maximum DTE (e.g., ~2.5 months)
+    
+    # Moneyness filters (strike relative to spot)
+    # -0.05 = 5% OTM, +0.05 = 5% ITM
+    'moneyness_min': -0.05,
+    'moneyness_max': 0.05,
+    
+    # Liquidity filters (minimum thresholds)
+    'min_volume': 1,              # Require at least some volume
+    'min_open_interest': 100,     # Require meaningful open interest
+    
+    # Microstructure quality filters
+    'max_spread_pct': 0.50,      # Max 50% bid-ask spread
+    'min_bid': 0.01,             # Minimum bid price (avoid $0 bids)
+    'min_ask': 0.01,             # Minimum ask price
+    
+    # Option type filter (None = both calls and puts)
+    'option_type': None,  # 'call', 'put', or None for both
+}
+
+# ============================================================================
+# KNOWN STOCK SPLITS (Corporate Actions Catalog)
+# ============================================================================
+
+STOCK_SPLITS: Dict[str, List[Tuple[str, float, str]]] = {
+    # Format: ticker: [(date, ratio, description), ...]
+    "aapl": [
+        ("2020-08-31", 4.0, "4-for-1 split"),
+        ("2014-06-09", 7.0, "7-for-1 split"),
+    ],
+    "tsla": [
+        ("2022-08-25", 3.0, "3-for-1 split"),
+        ("2020-08-31", 5.0, "5-for-1 split"),
+    ],
+    "nvda": [
+        ("2024-06-10", 10.0, "10-for-1 split"),
+        ("2021-07-20", 4.0, "4-for-1 split"),
+    ],
+    "googl": [
+        ("2022-07-18", 20.0, "20-for-1 split"),
+    ],
+    "goog": [
+        ("2022-07-18", 20.0, "20-for-1 split"),
+    ],
+    "amzn": [
+        ("2022-06-06", 20.0, "20-for-1 split"),
+    ],
+}
+
 
 # ============================================================================
 # STORAGE CONFIGURATION
@@ -217,35 +283,114 @@ STORAGE_CONFIG: Dict = {
 REQUIRED_COLUMNS: List[str] = [
     'price',              # Underlying price
     'option_price',       # Option premium (close or mid)
-    'strike_distance',    # strike - underlying_price
+    'strike_distance',    # strike - underlying_price (DOLLARS, not percent)
     'time_to_expiry',     # Days to expiration (DTE)
     'volume',             # Option volume
-    'implied_volatility', # IV (calculated or fetched)
+    'implied_volatility', # IV (pre-calculated in philippdubach dataset)
     'vix_level',          # VIX index level
-    'spy_return_5min',    # Short-term return proxy (use daily)
+    'spy_return_1d',      # Daily return proxy (RENAMED from spy_return_5min)
     'rsi',                # RSI indicator on underlying
     'timestamp',          # YYYY-MM-DD HH:MM:SS
 ]
+
+# IMPORTANT: spy_return_5min has been RENAMED to spy_return_1d
+# This is because the philippdubach dataset is daily EOD only (no intraday data).
+# Training.py and Training_MultiTicker.py must be updated accordingly.
 
 # Additional columns to capture (not required by Training.py but useful)
 OPTIONAL_COLUMNS: List[str] = [
     'ticker',             # Stock symbol
     'sector',             # Sector classification
     'contract_symbol',    # Full option symbol (OCC format)
+    'contract_id',        # Unique contract identifier (philippdubach)
     'expiration_date',    # Option expiration date
     'strike',             # Strike price
-    'option_type',        # 'C' or 'P'
+    'option_type',        # 'C' or 'P' (or 'call'/'put' in philippdubach)
     'bid',                # Bid price
     'ask',                # Ask price
+    'mid',                # Mid price (bid + ask) / 2
+    'mark',               # Mark price (philippdubach dataset)
+    'spread',             # Bid-ask spread (ask - bid)
+    'spread_pct',         # Spread as % of mid
     'bid_size',           # Bid size
     'ask_size',           # Ask size
     'open_interest',      # Open interest
     'open',               # Option open price
     'high',               # Option high price
     'low',                # Option low price
+    'last',               # Last traded price (philippdubach)
     'underlying_volume',  # Underlying stock volume
     'date',               # Calendar date (YYYY-MM-DD)
+    'delta',              # Option delta (philippdubach)
+    'gamma',              # Option gamma (philippdubach)
+    'theta',              # Option theta (philippdubach)
+    'vega',               # Option vega (philippdubach)
+    'rho',                # Option rho (philippdubach)
+    'in_the_money',       # ITM flag (philippdubach)
+    'moneyness',          # strike / spot (calculated)
+    'strike_distance_pct', # (strike - spot) / spot (calculated)
 ]
+
+# ============================================================================
+# PHILIPPDUBACH DATASET SCHEMA
+# ============================================================================
+
+PHILIPPDUBACH_SCHEMA: Dict[str, str] = {
+    # Expected columns and dtypes from philippdubach/options-data
+    "contract_id": "object",
+    "symbol": "object",
+    "expiration": "datetime64[ns]",
+    "strike": "float64",
+    "type": "object",  # "call" or "put"
+    "last": "float64",
+    "mark": "float64",
+    "bid": "float64",
+    "ask": "float64",
+    "bid_size": "int64",
+    "ask_size": "int64",
+    "volume": "int64",
+    "open_interest": "int64",
+    "date": "datetime64[ns]",
+    "implied_volatility": "float64",
+    "delta": "float64",
+    "gamma": "float64",
+    "theta": "float64",
+    "vega": "float64",
+    "rho": "float64",
+    "in_the_money": "bool",
+}
+
+# ============================================================================
+# DATASET METADATA (Snapshot Tracking)
+# ============================================================================
+
+DATASET_METADATA: Dict = {
+    # Track which version of the dataset was used for training
+    "source": "philippdubach/options-data",
+    "snapshot_date": "2025-12-16",
+    "url": "https://github.com/philippdubach/options-data",
+    "license": "Educational and research purposes",
+    
+    # Ticker universe actually used
+    "tickers_used": None,  # Will be populated at runtime
+    "ticker_count": None,
+    
+    # Date range actually queried
+    "date_range_start": None,
+    "date_range_end": None,
+    
+    # Row counts
+    "total_contracts_fetched": None,
+    "total_contracts_after_filters": None,
+    
+    # Query metadata
+    "query_filters_applied": None,
+    "corporate_actions_validated": None,
+    
+    # Execution metadata
+    "collection_timestamp": None,
+    "collection_duration_seconds": None,
+}
 
 # ============================================================================
 # VALIDATION THRESHOLDS
@@ -314,29 +459,51 @@ def get_estimated_storage_size_mb() -> float:
 def print_config_summary():
     """Print configuration summary for verification"""
     print("=" * 70)
-    print("THETADATA COLLECTION CONFIGURATION SUMMARY")
+    print("OPTIONS DATA COLLECTION CONFIGURATION SUMMARY")
     print("=" * 70)
-    print(f"\nTicker Universe:")
+    print(f"\n📊 PRIMARY DATA SOURCE: {DATASET_METADATA['source']}")
+    print(f"   Snapshot Date: {PARQUET_CONFIG['dataset_snapshot_date']}")
+    print(f"   Available Tickers: {PARQUET_CONFIG['total_tickers']}")
+    print(f"   Date Coverage: {PARQUET_CONFIG['date_range'][0]} to {PARQUET_CONFIG['date_range'][1]}")
+    print(f"   Cost: FREE (no authentication required)")
+    
+    print(f"\nTicker Universe (Original 45):")
     for category, tickers in TICKER_UNIVERSE.items():
         print(f"  {category:15s}: {len(tickers):2d} tickers - {', '.join(tickers[:3])}...")
     print(f"  {'TOTAL':15s}: {len(ALL_TICKERS):2d} tickers")
     
-    print(f"\nSampling Configuration:")
-    print(f"  Expiry Buckets: {SAMPLING_CONFIG['expiry_buckets']}")
-    print(f"  Moneyness: {SAMPLING_CONFIG['moneyness_pct']}")
-    print(f"  Contracts/Day: {SAMPLING_CONFIG['contracts_per_day']}")
+    print(f"\nQuery Filters (Predicate Pushdown):")
+    print(f"  DTE Range: {QUERY_FILTERS['dte_min']}-{QUERY_FILTERS['dte_max']} days")
+    print(f"  Moneyness: {QUERY_FILTERS['moneyness_min']*100:.0f}% to {QUERY_FILTERS['moneyness_max']*100:.0f}%")
+    print(f"  Min Volume: {QUERY_FILTERS['min_volume']}")
+    print(f"  Min OI: {QUERY_FILTERS['min_open_interest']}")
+    print(f"  Max Spread: {QUERY_FILTERS['max_spread_pct']*100:.0f}%")
     
-    print(f"\nData Range:")
+    print(f"\nData Range (Query Target):")
     print(f"  Start: {DATA_RANGE['start_date']}")
     print(f"  End: {DATA_RANGE['end_date']}")
     
-    print(f"\nEstimates:")
-    print(f"  Total Contracts: {get_total_contracts_estimate():,}")
-    print(f"  Storage Size: ~{get_estimated_storage_size_mb():.1f} MB (compressed)")
+    print(f"\nCorporate Actions Tracking:")
+    splits_count = sum(len(events) for events in STOCK_SPLITS.values())
+    print(f"  Tickers with known splits: {len(STOCK_SPLITS)}")
+    print(f"  Total split events tracked: {splits_count}")
+    
+    print(f"\nRequired Schema (Training.py):")
+    print(f"  Columns: {len(REQUIRED_COLUMNS)}")
+    print(f"  Note: spy_return_5min → spy_return_1d (daily proxy)")
     
     print(f"\nStorage:")
     print(f"  Raw Parquet: {STORAGE_CONFIG['raw_parquet_dir']}")
     print(f"  Processed CSV: {STORAGE_CONFIG['processed_csv_dir']}")
+    print(f"  Metadata: {STORAGE_CONFIG['metadata_dir']}")
+    
+    print(f"\n💡 Benefits:")
+    print(f"  ✓ Zero cost (FREE open-source dataset)")
+    print(f"  ✓ Zero setup (no API keys, no authentication)")
+    print(f"  ✓ Pre-calculated Greeks and IV")
+    print(f"  ✓ Remote query (no full dataset download)")
+    print(f"  ✓ 104 tickers available (vs. 45 planned)")
+    print(f"  ✓ Longer history (2008 vs. 2019)")
     
     print("=" * 70)
 

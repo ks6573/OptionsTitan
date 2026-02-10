@@ -4,6 +4,8 @@
 
 > ⚠️ **Risk Warning**: Options trading involves substantial risk. This is for educational purposes only.
 
+> 🚀 **NEW**: Now with UV support! 10-100x faster installations. See [Migration Guide](docs/MIGRATION_TO_UV.md)
+
 ---
 
 ## 🎯 What It Does
@@ -17,7 +19,7 @@ OptionsTitan analyzes market data and recommends optimal options strategies tail
 - 💡 **Strategy Recommendations**: Top 5 ranked strategies with detailed reasoning
 - 🎨 **Modern GUI**: Beautiful PySide6 interface with tabbed results
 - ✨ **Meta LLAMA AI**: Optional AI-powered market insights and personalized commentary
-- 📊 **Multi-Year Data**: ThetaData integration for institutional-grade historical options data (NEW)
+- 📊 **Free Historical Data**: 104 tickers (2008-2025) from open-source dataset with pre-calculated Greeks (NEW)
 
 ---
 
@@ -27,12 +29,21 @@ OptionsTitan analyzes market data and recommends optimal options strategies tail
 
 ### Installation (One Time)
 
+**With uv (recommended - 10-100x faster):**
 ```bash
-pip install -r requirements.txt
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies
+uv sync
+
+# Verify
+uv run python verify_installation.py
 ```
 
-**Verify installation:**
+**With pip (legacy):**
 ```bash
+pip install -r requirements.txt
 python verify_installation.py
 ```
 
@@ -42,6 +53,10 @@ This checks that all dependencies are properly installed.
 
 **Modern Qt Version (Best Experience):**
 ```bash
+# With uv
+uv run python options_gui_qt.py
+
+# Or directly
 python options_gui_qt.py
 ```
 
@@ -93,9 +108,9 @@ This runs the complete pipeline: data preprocessing, feature engineering, 5-mode
 
 ## 📊 Advanced: Multi-Year Data Collection (NEW)
 
-**Scale your models with institutional-grade historical options data.**
+**Scale your models with FREE, institutional-grade historical options data.**
 
-OptionsTitan now supports fetching multi-year, multi-ticker options data using ThetaData for training more robust models.
+OptionsTitan uses the philippdubach/options-data dataset (104 tickers, 2008-2025) for training more robust models with zero cost.
 
 ### What's Included
 
@@ -108,8 +123,8 @@ OptionsTitan now supports fetching multi-year, multi-ticker options data using T
 ### Quick Start
 
 ```bash
-# 1. Setup ThetaData Terminal (one-time)
-# See: docs/THETADATA_SETUP.md
+# 1. Validate free data infrastructure
+python test_free_data_migration.py
 
 # 2. Test connection
 python -m src.data_collection.test_data_collection
@@ -138,12 +153,16 @@ python -m src.Training_MultiTicker
 
 **Import Errors:**
 ```bash
+# With uv (recommended)
+uv sync
+
+# With pip (legacy)
 pip install -r requirements.txt
 ```
 
 **GUI Won't Launch:**
 - Check Python version: `python3 --version` (need 3.7+)
-- Install Qt: `pip install PySide6>=6.6.0`
+- Install Qt: `uv pip install PySide6>=6.6.0` or `pip install PySide6>=6.6.0`
 - Try tkinter version: `python options_gui.py`
 
 **Can't Fetch Stock Data:**
@@ -167,7 +186,7 @@ pip install -r requirements.txt
 - ⚙️ **[Advanced Configuration](docs/ADVANCED_CONFIGURATION.md)** - Customize risk profiles
 
 **Advanced Features:**
-- 📊 **[Data Collection](README_DATA_COLLECTION.md)** - Multi-year ThetaData integration (NEW)
+- 📊 **[Data Collection](README_DATA_COLLECTION.md)** - FREE multi-year data (104 tickers, 2008-2025) (NEW)
 - 📈 [Performance Guide](docs/PERFORMANCE_GUIDE.md) - Backtesting results
 - 🔧 [Troubleshooting Guide](docs/TROUBLESHOOTING.md) - Fix common issues
 
@@ -180,22 +199,22 @@ OptionsTitan/
 ├── 📄 readme.md                    # You are here
 ├── 📄 GETTING_STARTED.md           # Complete setup guide
 ├── 📄 QUICK_REFERENCE.md           # Command reference
-├── 📄 README_DATA_COLLECTION.md    # ThetaData integration (NEW)
+├── 📄 README_DATA_COLLECTION.md    # FREE data collection (NEW)
 ├── 🐍 main.py                      # AI training pipeline
 ├── 🎨 options_gui_qt.py            # Modern GUI (recommended)
 ├── 🎨 options_gui.py               # Classic GUI
 ├── 📂 src/                         # Core AI modules
 │   ├── Training.py                 # Original training (60-day SPY)
 │   ├── Training_MultiTicker.py     # Multi-ticker training (NEW)
-│   └── data_collection/            # ThetaData integration (NEW)
+│   └── data_collection/            # FREE data infrastructure (NEW)
 ├── 📂 ui/                          # Qt UI components
 ├── 📂 scripts/                     # Launcher scripts
-│   ├── fetch_all_tickers.sh        # Data collection (NEW)
-│   └── fetch_all_tickers.bat       # Data collection (NEW)
+│   ├── install.sh                  # uv installation
+│   └── launch_gui.sh               # GUI launcher
+├── 📂 test_free_data_migration.py  # Data validation suite
 └── 📂 docs/                        # Documentation
     ├── gui/                        # GUI tutorials
     ├── llama/                      # AI setup guides
-    ├── THETADATA_SETUP.md          # Terminal setup (NEW)
     └── DATA_COLLECTION_GUIDE.md    # Collection guide (NEW)
 ```
 
@@ -218,7 +237,7 @@ OptionsTitan/
 
 **Optional Features:**
 - 🤖 [Enable AI](docs/llama/LLAMA_QUICKSTART.md) - LLAMA setup
-- 📊 [Data Collection](README_DATA_COLLECTION.md) - Multi-year ThetaData (NEW)
+- 📊 [Data Collection](README_DATA_COLLECTION.md) - FREE multi-year data (NEW)
 
 **Support:**
 - 🔧 [Troubleshooting](docs/TROUBLESHOOTING.md) - Fix issues

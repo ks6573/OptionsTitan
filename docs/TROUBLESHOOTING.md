@@ -13,13 +13,15 @@ Complete guide to solving common OptionsTitan issues.
 
 **Solution:**
 ```bash
-pip install -r requirements.txt
+uv sync  # recommended
+# or: pip install -r requirements.txt  # legacy
 ```
 
 **If that fails:**
 ```bash
-pip install --upgrade pip
-pip install xgboost lightgbm scikit-learn pandas numpy yfinance ta scipy optuna
+uv pip install --upgrade pip
+uv pip install xgboost lightgbm scikit-learn pandas numpy yfinance ta scipy optuna
+# or with pip: pip install --upgrade pip && pip install xgboost lightgbm scikit-learn pandas numpy yfinance ta scipy optuna
 ```
 
 ### Permission Errors
@@ -29,7 +31,8 @@ pip install xgboost lightgbm scikit-learn pandas numpy yfinance ta scipy optuna
 
 **Solution:**
 ```bash
-pip install --user -r requirements.txt
+uv sync  # uv handles this automatically
+# or: pip install --user -r requirements.txt  # legacy
 ```
 
 ### Python Version Issues
@@ -329,7 +332,8 @@ cp -r models/ models_backup/
 ```bash
 rm -rf src/__pycache__/
 pip uninstall -y xgboost lightgbm scikit-learn
-pip install -r requirements.txt
+uv sync  # recommended
+# or: pip install -r requirements.txt  # legacy
 ```
 
 3. **Test with minimal config**:

@@ -2,7 +2,15 @@
 # OptionsTitan Requirements - Python 3.7+
 # ===================================================================
 #
-# Installation: pip install -r requirements.txt
+# RECOMMENDED: Use UV package manager (10-100x faster)
+#   uv sync
+#   See: docs/MIGRATION_TO_UV.md
+#
+# LEGACY: pip installation (slower but still supported)
+#   pip install -r requirements.txt
+#
+# This file is maintained for pip compatibility.
+# Primary dependency source: pyproject.toml
 #
 # Core dependencies are required for all functionality.
 # Optional dependencies enhance specific features.
@@ -31,15 +39,21 @@ ta>=0.10.2                 # Technical analysis indicators
 # -------------------------------------------------------------------
 # DATA COLLECTION & STORAGE (Required for Multi-Ticker Data)
 # -------------------------------------------------------------------
-requests>=2.31.0           # HTTP client for ThetaData REST API
+requests>=2.31.0           # HTTP client for data sources
 pyarrow>=14.0.0            # Parquet file format (columnar storage)
 fastparquet>=2023.10.0     # Alternative Parquet engine (optional)
 
 # -------------------------------------------------------------------
-# OPTIONS PRICING (Required for IV Calculation)
+# REMOTE QUERY (NEW - Required for Free Data Collection)
 # -------------------------------------------------------------------
-py_vollib>=1.0.1           # Black-Scholes and implied volatility
-                           # Used by data_normalizer.py for IV calculation
+duckdb>=0.10.0             # Remote Parquet queries with predicate pushdown (primary)
+polars>=0.20.0             # Alternative to DuckDB for lazy evaluation (optional)
+
+# -------------------------------------------------------------------
+# OPTIONS PRICING (Legacy - IV now pre-calculated in dataset)
+# -------------------------------------------------------------------
+py_vollib>=1.0.1           # Black-Scholes and implied volatility (fallback only)
+                           # Mostly replaced by pre-calculated IV in philippdubach dataset
 
 # -------------------------------------------------------------------
 # OPTIMIZATION (Required for Training)

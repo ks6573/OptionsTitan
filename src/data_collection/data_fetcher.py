@@ -1,17 +1,17 @@
 """
-Historical Data Fetcher
+Historical Data Fetcher (DEPRECATED - LEGACY CODE)
 
-Orchestrates multi-year, multi-ticker options data collection using:
-- ThetaData REST API for options data
+⚠️ DEPRECATED: This module was built for paid API services and is no longer maintained.
+
+✅ USE INSTEAD: src/data_collection/remote_query.py for FREE data collection
+
+This legacy code orchestrated multi-year, multi-ticker options data collection using:
+- Paid API service for options data
 - yfinance for underlying prices and VIX
 - Data normalizer for schema transformation
 - Parquet storage with partitioning
 
-Supports:
-- Single-ticker POC (AAPL)
-- Full 45-ticker universe
-- Incremental updates
-- Resume capability for interrupted fetches
+Keeping for reference only. Does not work without external API client.
 """
 
 import pandas as pd

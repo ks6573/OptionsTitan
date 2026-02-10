@@ -23,7 +23,8 @@ OptionsTitan's GUI can be enhanced with Meta's LLAMA AI to provide:
 ### 2. Install LLAMA API Client
 
 ```bash
-pip install llama-api-client
+uv pip install llama-api-client
+# or: pip install llama-api-client
 ```
 
 Or add to your `requirements.txt`:
@@ -68,7 +69,8 @@ python options_gui.py
 
 Install python-dotenv:
 ```bash
-pip install python-dotenv
+uv pip install python-dotenv
+# or: pip install python-dotenv
 ```
 
 The GUI will automatically load `.env` if dotenv is installed.
@@ -234,7 +236,8 @@ Assuming Meta LLAMA pricing (check current rates):
 
 **Solution:**
 ```bash
-pip install llama-api-client
+uv pip install llama-api-client
+# or: pip install llama-api-client
 ```
 
 ### "LLAMA_API_KEY not found"

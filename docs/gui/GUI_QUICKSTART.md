@@ -19,6 +19,10 @@ OptionsTitan now offers two GUI versions:
 
 ### 1. Install Dependencies (First Time Only)
 ```bash
+# With uv (recommended)
+uv sync
+
+# With pip (legacy)
 pip install -r requirements.txt
 ```
 
@@ -125,7 +129,7 @@ Why this strategy?
 ## Common Issues
 
 ❌ **"Dependencies Missing"**
-→ Run: `pip install -r requirements.txt`
+→ Run: `uv sync` or `pip install -r requirements.txt`
 
 ❌ **"Cannot fetch data"**
 → Check ticker symbol spelling
@@ -134,6 +138,7 @@ Why this strategy?
 
 ❌ **GUI won't open**
 → Verify Python 3.7+ installed
+→ Install dependencies: `uv sync` or `pip install -r requirements.txt`
 → Check tkinter: `python -c "import tkinter"`
 → Install if needed (see GUI_GUIDE.md)
 

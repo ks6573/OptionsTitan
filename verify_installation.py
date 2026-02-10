@@ -3,10 +3,15 @@
 OptionsTitan Installation Verification Script
 
 Checks if all required dependencies are properly installed.
-Run this after: pip install -r requirements.txt
+
+Installation methods:
+    uv sync                      (recommended - 10-100x faster)
+    pip install -r requirements.txt  (legacy)
 
 Usage:
     python verify_installation.py
+    # or with uv
+    uv run python verify_installation.py
 """
 
 import sys
@@ -105,15 +110,35 @@ def check_dependencies():
         all_required_ok = False
     print()
     
+    # Check package manager
+    print("📦 PACKAGE MANAGER")
+    print("-" * 60)
+    import subprocess
+    try:
+        result = subprocess.run(['uv', '--version'], capture_output=True, text=True)
+        if result.returncode == 0:
+            uv_version = result.stdout.strip().replace('uv ', '')
+            print(f"✅ uv {uv_version:25} - Installed (recommended)")
+        else:
+            print("⚠️  uv                           - Not installed (pip fallback available)")
+    except FileNotFoundError:
+        print("ℹ️  uv                           - Not installed (using pip)")
+    print()
+    
     # Final verdict
     print("=" * 60)
     if all_required_ok:
         print("🎉 SUCCESS! All core dependencies are installed.")
         print()
         print("✅ You can now run:")
-        print("   - python options_gui_qt.py    (Modern Qt GUI)")
-        print("   - python options_gui.py       (Classic Tkinter GUI)")
-        print("   - python main.py              (Train AI models)")
+        print("   - uv run python options_gui_qt.py    (Modern Qt GUI)")
+        print("   - uv run python options_gui.py       (Classic Tkinter GUI)")
+        print("   - uv run python main.py              (Train AI models)")
+        print()
+        print("   Or without uv prefix:")
+        print("   - python options_gui_qt.py")
+        print("   - python options_gui.py")
+        print("   - python main.py")
         print()
         print("📖 Next steps:")
         print("   1. Read GETTING_STARTED.md for setup guide")
@@ -123,11 +148,13 @@ def check_dependencies():
         print("❌ MISSING REQUIRED DEPENDENCIES")
         print()
         print("🔧 To fix, run:")
-        print("   pip install -r requirements.txt")
+        print("   uv sync                           (recommended)")
+        print("   pip install -r requirements.txt   (legacy)")
         print()
         print("📖 For help, see:")
         print("   - GETTING_STARTED.md")
         print("   - docs/TROUBLESHOOTING.md")
+        print("   - docs/MIGRATION_TO_UV.md")
     print("=" * 60)
     print()
     

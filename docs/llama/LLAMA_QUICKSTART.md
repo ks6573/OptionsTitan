@@ -5,7 +5,8 @@ Get AI-powered insights in 3 minutes!
 ## Step 1: Install LLAMA Client (30 seconds)
 
 ```bash
-pip install llama-api-client
+uv pip install llama-api-client
+# or: pip install llama-api-client
 ```
 
 ## Step 2: Set Your API Key (1 minute)

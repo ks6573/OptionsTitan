@@ -1,0 +1,110 @@
+[project]
+name = "optionstitan"
+version = "1.0.0"
+description = "AI-powered options trading strategy analyzer with 5-model ensemble"
+readme = "readme.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "OptionsTitan Team"}
+]
+keywords = ["options", "trading", "ai", "machine-learning", "finance"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    # Core Data Science & ML
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "scikit-learn>=1.3.0",
+    "xgboost>=1.7.0",
+    "lightgbm>=4.0.0",
+    
+    # Financial Data
+    "yfinance>=0.2.18",
+    "ta>=0.10.2",
+    
+    # Data Collection & Storage (FREE - philippdubach/options-data)
+    "requests>=2.31.0",
+    "pyarrow>=14.0.0",
+    "fastparquet>=2023.10.0",
+    "duckdb>=0.10.0",      # NEW: Remote Parquet queries (primary)
+    "polars>=0.20.0",      # NEW: Alternative to DuckDB (optional)
+    
+    # Options Pricing (now mostly pre-calculated in dataset)
+    "py-vollib>=1.0.1",  # Keep for legacy/fallback
+    
+    # Optimization
+    "optuna>=3.0.0",
+    
+    # GUI
+    "PySide6>=6.6.0",
+    "PySide6-Addons>=6.6.0",
+    
+    # Environment Management
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+ai = [
+    "llama-api-client>=0.5.0,<1.0.0",  # Use available version range
+]
+explainability = [
+    # Model Explainability - optional due to Python 3.13 compatibility issues
+    # Install separately if needed: uv pip install shap
+    "shap>=0.44.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/optionstitan"
+Documentation = "https://github.com/yourusername/optionstitan/blob/main/GETTING_STARTED.md"
+Repository = "https://github.com/yourusername/optionstitan"
+
+[project.scripts]
+optionstitan-gui = "options_gui_qt:main"
+optionstitan-train = "main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+include = [
+    "*.py",
+    "ui/*.py",
+    "scripts/*",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[tool.uv.workspace]
+members = ["."]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312", "py313"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"

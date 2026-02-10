@@ -44,6 +44,40 @@ scripts\launch_gui.bat
 
 ---
 
+### Installation Scripts (NEW)
+
+#### [install.sh](install.sh)
+**Modern Installation with UV**
+```bash
+./scripts/install.sh
+```
+
+**What it does:**
+- Installs uv package manager if not present
+- Runs `uv sync` to install all dependencies
+- 10-100x faster than pip
+- Creates virtual environment automatically
+
+**Use when:**
+- First-time installation
+- Want fastest installation method
+- Prefer modern package management
+
+---
+
+#### [install.bat](install.bat)
+**Modern Installation with UV (Windows)**
+```cmd
+scripts\install.bat
+```
+
+**What it does:**
+- Same as install.sh but for Windows
+- Uses PowerShell to install uv
+- Runs `uv sync` for dependencies
+
+---
+
 ### Setup Scripts
 
 #### [setup_llama.sh](setup_llama.sh)
@@ -145,6 +179,7 @@ chmod +x scripts/setup_llama.sh
 
 **"Python not found"**
 - Install Python 3.7+
+- Install dependencies: `uv sync` or `pip install -r requirements.txt`
 - Add Python to PATH
 - Use `python3` instead of `python`
 

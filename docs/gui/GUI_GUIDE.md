@@ -251,7 +251,8 @@ When LLAMA AI is enabled, you'll see:
 
 **Solution:**
 ```bash
-pip install -r requirements.txt
+uv sync  # recommended
+# or: pip install -r requirements.txt  # legacy
 ```
 
 ### "Cannot fetch data for symbol" Error

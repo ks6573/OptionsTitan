@@ -8,13 +8,19 @@
 
 ```bash
 # Install and verify
-pip install -r requirements.txt
-python verify_installation.py  # Check all dependencies
+uv sync                            # recommended (fast)
+pip install -r requirements.txt    # legacy (slower)
+uv run python verify_installation.py  # Check all dependencies
 
-# Run
-python main.py                  # Train models
-python options_gui_qt.py        # Modern GUI
-python options_gui.py           # Classic GUI
+# Run (with uv)
+uv run python main.py              # Train models
+uv run python options_gui_qt.py    # Modern GUI
+uv run python options_gui.py       # Classic GUI
+
+# Or run directly (if venv activated)
+python main.py                     # Train models
+python options_gui_qt.py           # Modern GUI
+python options_gui.py              # Classic GUI
 
 # Check results
 ls -la models/          # Trained models
@@ -80,7 +86,7 @@ tail logs/*.log         # Recent logs
 - [ ] Set up stop-loss discipline
 
 **Daily Routine:**
-- [ ] Run `python main.py`
+- [ ] Run `uv run python main.py` or `python main.py`
 - [ ] Check confidence levels
 - [ ] Review risk metrics
 - [ ] Execute high-confidence trades

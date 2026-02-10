@@ -1,7 +1,7 @@
 """
 Data Normalizer
 
-Normalizes raw ThetaData responses to Training.py schema with multi-year
+Normalizes raw options data to Training.py schema with multi-year
 preprocessing including:
 - Stock split adjustments
 - Volume normalization (log1p, rolling median)
@@ -56,10 +56,10 @@ class MultiYearNormalizer:
                          ticker: str,
                          underlying_prices: pd.DataFrame = None) -> pd.DataFrame:
         """
-        Transform raw ThetaData + underlying prices to Training.py schema
+        Transform raw options data + underlying prices to Training.py schema
         
         Args:
-            raw_df: Raw option data from ThetaData
+            raw_df: Raw option data
                 Expected columns: date, close (option), volume, bid, ask, strike, expiration
             ticker: Stock ticker symbol
             underlying_prices: DataFrame with underlying OHLCV data
@@ -96,9 +96,11 @@ class MultiYearNormalizer:
             df['expiration_date'] = pd.to_datetime(df['expiration_date'])
             df['time_to_expiry'] = (df['expiration_date'] - df['date']).dt.days
         
-        # Step 5: Map option_price from ThetaData 'close'
+        # Step 5: Map option_price from 'close' or 'mark'
         if 'close' in df.columns:
             df['option_price'] = df['close']
+        elif 'mark' in df.columns:
+            df['option_price'] = df['mark']
         elif 'bid' in df.columns and 'ask' in df.columns:
             # Use mid price if close not available
             df['option_price'] = (df['bid'] + df['ask']) / 2.0
@@ -413,7 +415,7 @@ class MultiYearNormalizer:
         """
         Calculate returns as proxy for spy_return_5min
         
-        Uses daily returns since ThetaData EOD doesn't have intraday
+        Uses daily returns since dataset is EOD (no intraday data)
         """
         if 'price' not in df.columns:
             df['spy_return_5min'] = 0.0

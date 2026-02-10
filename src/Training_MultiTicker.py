@@ -7,7 +7,7 @@ Extends Training.py to handle multi-year, multi-ticker datasets with:
 - VIX regime balancing for COVID period
 - Universal model across all tickers
 
-Data source: ThetaData historical options (via data_collection module)
+Data source: FREE philippdubach/options-data (via remote_query module)
 Schema: Same as Training.py (10 required columns)
 """
 

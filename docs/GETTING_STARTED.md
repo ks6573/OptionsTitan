@@ -26,8 +26,24 @@ Or download and extract the ZIP file.
 
 ### Step 2: Install Dependencies
 
+**Method 1: uv (Recommended - 10-100x faster)**
+
+```bash
+# Install uv (one-time)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install OptionsTitan dependencies
+uv sync
+
+# Verify installation
+uv run python verify_installation.py
+```
+
+**Method 2: pip (Legacy)**
+
 ```bash
 pip install -r requirements.txt
+python verify_installation.py
 ```
 
 This installs:
@@ -37,7 +53,9 @@ This installs:
 - PySide6 (modern GUI)
 - And more...
 
-**Time:** ~2-3 minutes depending on your connection
+**Time:** 
+- uv: ~30 seconds first time, <5 seconds after
+- pip: ~2-3 minutes
 
 ---
 
@@ -55,7 +73,10 @@ This installs:
 # Windows
 scripts\launch_gui_qt.bat
 
-# Or directly
+# Or directly (with uv)
+uv run python options_gui_qt.py
+
+# Or without uv
 python options_gui_qt.py
 ```
 
@@ -96,7 +117,7 @@ Get Meta LLAMA AI-powered insights in the GUI.
 ### Quick Setup:
 
 1. **Get API Key:** Visit https://api.llama.com/
-2. **Install client:** `pip install llama-api-client`
+2. **Install client:** `uv pip install llama-api-client` or `pip install llama-api-client`
 3. **Set key:**
    ```bash
    # Mac/Linux
@@ -120,6 +141,10 @@ Get Meta LLAMA AI-powered insights in the GUI.
 
 ### Quick Verification (Recommended):
 ```bash
+# With uv
+uv run python verify_installation.py
+
+# Or directly
 python verify_installation.py
 ```
 
@@ -127,6 +152,10 @@ This checks all dependencies and confirms everything is installed correctly.
 
 ### Manual Test - GUI:
 ```bash
+# With uv
+uv run python options_gui_qt.py
+
+# Or directly
 python options_gui_qt.py
 ```
 
@@ -286,7 +315,8 @@ cat QUICK_REFERENCE.md
 
 **"Import errors"**
 ```bash
-pip install -r requirements.txt
+uv sync                           # recommended
+pip install -r requirements.txt   # legacy
 ```
 
 **"No data for symbol"**
@@ -296,7 +326,7 @@ pip install -r requirements.txt
 
 **"GUI won't launch"**
 - Verify Python 3.7+
-- Check PySide6 installed: `pip install PySide6`
+- Check PySide6 installed: `uv pip install PySide6` or `pip install PySide6`
 - Try tkinter version: `python options_gui.py`
 
 ### Detailed Help:
@@ -332,7 +362,7 @@ You now have:
 **Next step:** Launch the GUI and run your first analysis!
 
 ```bash
-python options_gui_qt.py
+uv run python options_gui_qt.py  # or just: python options_gui_qt.py
 ```
 
 **Remember:** This is for educational purposes. Paper trade first, start small, and always manage your risk!
