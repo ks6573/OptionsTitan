@@ -114,36 +114,34 @@ OptionsTitan uses the philippdubach/options-data dataset (104 tickers, 2008-2025
 
 ### What's Included
 
-- **45-Ticker Universe**: ETFs, Tech, Financials, Healthcare, Energy, Consumer stocks
-- **5+ Years of Data**: 2019-2024+ with full COVID coverage
-- **20 Contracts/Day**: Systematic sampling across strikes and expirations
-- **Auto-Normalization**: Stock splits, IV calculation, schema transformation
-- **Walk-Forward Validation**: 2019-2020→2021, 2019-2021→2022, etc.
+- **104-Ticker Universe**: ETFs, indices, mega-cap tech, financials, healthcare, energy, consumer
+- **17+ Years of Data**: 2008-2025 with full market cycle coverage
+- **Pre-calculated Greeks**: Delta, gamma, theta, vega, rho - no computation needed
+- **Remote Querying**: DuckDB/Polars with predicate pushdown - query without downloading
+- **Auto-Normalization**: Stock splits handled, schema validation, quality filters
+- **Walk-Forward Validation**: Multi-era training and validation support
 
 ### Quick Start
 
 ```bash
-# 1. Validate free data infrastructure
+# 1. Validate free data infrastructure (6 tests)
 python test_free_data_migration.py
 
-# 2. Test connection
-python -m src.data_collection.test_data_collection
+# 2. Query sample data (SPY, Q4 2024)
+python -c "
+from src.data_collection.remote_query import query_remote_parquet
+df = query_remote_parquet('spy', {'date_min': '2024-10-01', 'date_max': '2024-12-31'})
+print(f'Retrieved {len(df):,} contracts')
+"
 
-# 3. Fetch AAPL (POC - 15-30 minutes)
-python -m src.data_collection.data_fetcher --ticker AAPL --start 2019-01-01
-
-# 4. Fetch all 45 tickers (6-15 hours)
-./scripts/fetch_all_tickers.sh  # or .bat on Windows
-
-# 5. Train multi-ticker model
-python -m src.Training_MultiTicker
+# 3. Train multi-ticker model (requires collected data in data/processed_csv/)
+python src/Training_MultiTicker.py
 ```
 
 ### Documentation
 
-- 📘 **[README_DATA_COLLECTION.md](README_DATA_COLLECTION.md)** - Complete overview
-- 🛠️ **[THETADATA_SETUP.md](docs/THETADATA_SETUP.md)** - Terminal installation
-- 📊 **[DATA_COLLECTION_GUIDE.md](docs/DATA_COLLECTION_GUIDE.md)** - Detailed usage guide
+- 📘 **[README_DATA_COLLECTION.md](README_DATA_COLLECTION.md)** - Complete overview & migration guide
+- 📊 **[DATA_COLLECTION_GUIDE.md](docs/DATA_COLLECTION_GUIDE.md)** - Detailed collection guide with examples
 
 **Note:** This is an advanced feature. The default Training.py with 60-day SPY data works great for getting started.
 

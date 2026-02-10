@@ -51,9 +51,13 @@ class MultiTickerDataLoader:
         
         if not self.data_dir.exists():
             raise FileNotFoundError(
-                f"Data directory not found: {data_dir}\n"
-                "Run data collection first:\n"
-                "  python -m src.data_collection.data_fetcher --ticker AAPL"
+                f"Data directory not found: {data_dir}\n\n"
+                "To collect training data using FREE philippdubach dataset:\n"
+                "  1. Run validation: python test_free_data_migration.py\n"
+                "  2. Query data: See docs/DATA_COLLECTION_GUIDE.md\n"
+                "  3. Or use remote_query module:\n"
+                "     from src.data_collection.remote_query import batch_query_tickers\n\n"
+                "See README_DATA_COLLECTION.md for complete guide."
             )
     
     def load_single_ticker(self, ticker: str) -> pd.DataFrame:
@@ -341,27 +345,117 @@ class WalkForwardValidator:
 
 
 # ============================================================================
+# ============================================================================
+# SAMPLE DATA FETCH (FREE philippdubach dataset)
+# ============================================================================
+
+def fetch_sample_data(
+    data_dir: str = 'data/processed_csv',
+    tickers: List[str] = None,
+    date_min: str = '2024-10-01',
+    date_max: str = '2024-12-31',
+) -> bool:
+    """
+    Fetch a small sample of options data using FREE remote_query and save to data_dir.
+    Creates CSVs in the format expected by MultiTickerDataLoader.
+    """
+    import sys
+    try:
+        from src.data_collection.remote_query import query_remote_parquet, query_underlying_prices
+        from src.data_collection.data_normalizer import MultiYearNormalizer
+    except ImportError:
+        try:
+            from .data_collection.remote_query import query_remote_parquet, query_underlying_prices
+            from .data_collection.data_normalizer import MultiYearNormalizer
+        except ImportError:
+            # When run as script, add project root to path
+            _root = Path(__file__).resolve().parent.parent
+            if str(_root) not in sys.path:
+                sys.path.insert(0, str(_root))
+            try:
+                from src.data_collection.remote_query import query_remote_parquet, query_underlying_prices
+                from src.data_collection.data_normalizer import MultiYearNormalizer
+            except ImportError as e:
+                logger.error("Cannot import remote_query or data_normalizer: %s. Run from project root: python -m src.Training_MultiTicker --fetch-sample", e)
+                return False
+
+    tickers = tickers or ['spy', 'aapl']
+    data_path = Path(data_dir)
+    data_path.mkdir(parents=True, exist_ok=True)
+    normalizer = MultiYearNormalizer()
+
+    filters = {
+        'date_min': date_min,
+        'date_max': date_max,
+        'dte_min': 30,
+        'dte_max': 60,
+        'min_volume': 1,
+        'min_open_interest': 100,
+    }
+
+    for ticker in tickers:
+        ticker_lower = ticker.lower()
+        print(f"  Fetching {ticker.upper()} options...")
+        raw = query_remote_parquet(ticker_lower, filters)
+        if raw is None or raw.empty:
+            logger.warning(f"  No data for {ticker.upper()}, skipping")
+            continue
+        if 'expiration' in raw.columns and 'expiration_date' not in raw.columns:
+            raw = raw.copy()
+            raw['expiration_date'] = pd.to_datetime(raw['expiration'])
+        print(f"  Fetching {ticker.upper()} underlying prices...")
+        underlying = query_underlying_prices(ticker_lower, date_min=date_min, date_max=date_max)
+        if underlying is not None and not underlying.empty:
+            underlying = underlying.rename(columns={'close': 'Close', 'volume': 'Volume'})
+            if 'date' not in underlying.columns and 'Date' in underlying.columns:
+                underlying = underlying.rename(columns={'Date': 'date'})
+        else:
+            underlying = None
+        norm = normalizer.normalize_dataset(raw, ticker.upper(), underlying)
+        if norm is None or norm.empty:
+            logger.warning(f"  Normalization produced no rows for {ticker.upper()}, skipping")
+            continue
+        out_file = data_path / f"{ticker_lower}_{date_min[:4]}_q4_options.csv"
+        norm.to_csv(out_file, index=False, float_format='%.6f')
+        print(f"  Saved {len(norm):,} rows to {out_file}")
+    return True
+
+
 # MAIN TRAINING PIPELINE
 # ============================================================================
 
-def main():
+def main(data_dir: str = 'data/processed_csv', fetch_sample: bool = False):
     """Main multi-ticker training pipeline"""
     
     print("="*70)
     print("MULTI-TICKER OPTIONS TRADING MODEL TRAINING")
     print("="*70)
     
-    # Step 1: Load data
-    print("\n[1/7] Loading multi-ticker dataset...")
-    loader = MultiTickerDataLoader()
-    
-    try:
+    data_path = Path(data_dir)
+    if not data_path.exists() and fetch_sample:
+        print("\n[0/7] Fetching sample data (FREE philippdubach dataset)...")
+        if not fetch_sample_data(data_dir=data_dir):
+            print("\n❌ Sample fetch failed. See errors above.")
+            return
+        print("✓ Sample data ready.\n")
+    if not data_path.exists():
+        print("\n[1/7] Loading multi-ticker dataset...")
+        try:
+            loader = MultiTickerDataLoader(data_dir=data_dir)
+        except FileNotFoundError as e:
+            print(f"\n❌ Error: {e}")
+            print("\nTo fetch sample data automatically, run:")
+            print("  python -m src.Training_MultiTicker --fetch-sample")
+            return
         df = loader.load_all_tickers()
-    except FileNotFoundError as e:
-        print(f"\n❌ Error: {e}")
-        print("\nPlease run data collection first:")
-        print("  python -m src.data_collection.data_fetcher --ticker AAPL")
-        return
+    else:
+        print("\n[1/7] Loading multi-ticker dataset...")
+        loader = MultiTickerDataLoader(data_dir=data_dir)
+        try:
+            df = loader.load_all_tickers()
+        except FileNotFoundError as e:
+            print(f"\n❌ Error: {e}")
+            return
     
     print(f"✓ Loaded {len(df)} rows across {df['ticker'].nunique()} tickers")
     
@@ -527,4 +621,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description='Multi-ticker options model training')
+    parser.add_argument('--data-dir', default='data/processed_csv', help='Directory with ticker CSVs (default: data/processed_csv)')
+    parser.add_argument('--fetch-sample', action='store_true', help='If data dir is missing, fetch sample data from FREE philippdubach dataset (SPY + AAPL, 2024 Q4)')
+    args = parser.parse_args()
+    main(data_dir=args.data_dir, fetch_sample=args.fetch_sample)

@@ -54,8 +54,8 @@
    - Liquidity and spread filters
 
 6. **Data Fetcher** (`src/data_collection/data_fetcher.py`)
-   - ⚠️ *Being updated*: Remote query integration
-   - Multi-era validation support
+   - ⚠️ **DEPRECATED**: Legacy code for paid API services
+   - ✅ **Use instead**: `remote_query.py` for FREE data
    - Dataset metadata tracking
 
 7. **Multi-Ticker Training** (`src/Training_MultiTicker.py`)
@@ -339,24 +339,31 @@ python -c "import pandas as pd; df = pd.read_csv('data/processed_csv/aapl_2019_2
 
 ## Next Steps
 
-1. **Test Setup**
+1. **Validate Infrastructure**
    ```bash
-   python -m src.data_collection.test_data_collection
+   python test_free_data_migration.py
    ```
 
-2. **POC: AAPL**
-   ```bash
-   python -m src.data_collection.data_fetcher --ticker AAPL --start 2019-01-01
+2. **Query Sample Data (SPY)**
+   ```python
+   from src.data_collection.remote_query import query_remote_parquet
+   df = query_remote_parquet('spy', {
+       'date_min': '2024-10-01',
+       'date_max': '2024-12-31',
+       'dte_min': 30,
+       'dte_max': 60
+   })
+   print(f"Retrieved {len(df):,} contracts")
    ```
 
-3. **Full Collection**
-   ```bash
-   ./scripts/fetch_all_tickers.sh  # or .bat on Windows
-   ```
+3. **Collect Training Data**
+   - See [docs/DATA_COLLECTION_GUIDE.md](docs/DATA_COLLECTION_GUIDE.md) for examples
+   - Query multiple tickers using `batch_query_tickers()`
+   - Save results to `data/processed_csv/` or `data/training/`
 
 4. **Train Model**
    ```bash
-   python -m src.Training_MultiTicker
+   python src/Training_MultiTicker.py
    ```
 
 5. **Integrate with GUI**

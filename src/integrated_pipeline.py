@@ -20,27 +20,39 @@ import warnings
 import os
 from pathlib import Path
 
-# Import OptionsTitan components
+# Import OptionsTitan components (relative when in package, else same-dir)
 try:
     from .ensemble_models import EnsembleModelTrainer, FeatureStore
     ENSEMBLE_AVAILABLE = True
 except ImportError:
-    ENSEMBLE_AVAILABLE = False
-    logging.warning("ensemble_models.py not found. Ensemble functionality disabled.")
+    try:
+        from ensemble_models import EnsembleModelTrainer, FeatureStore
+        ENSEMBLE_AVAILABLE = True
+    except ImportError:
+        ENSEMBLE_AVAILABLE = False
+        logging.warning("ensemble_models.py not found. Ensemble functionality disabled.")
 
 try:
     from .risk_management import AdvancedRiskManager, CorrelationMonitor
     RISK_AVAILABLE = True
 except ImportError:
-    RISK_AVAILABLE = False
-    logging.warning("risk_management.py not found. Risk management functionality disabled.")
+    try:
+        from risk_management import AdvancedRiskManager, CorrelationMonitor
+        RISK_AVAILABLE = True
+    except ImportError:
+        RISK_AVAILABLE = False
+        logging.warning("risk_management.py not found. Risk management functionality disabled.")
 
 try:
     from .model_explainability import ModelExplainer
     EXPLAINABILITY_AVAILABLE = True
 except ImportError:
-    EXPLAINABILITY_AVAILABLE = False
-    logging.warning("model_explainability.py not found. Explainability functionality disabled.")
+    try:
+        from model_explainability import ModelExplainer
+        EXPLAINABILITY_AVAILABLE = True
+    except ImportError:
+        EXPLAINABILITY_AVAILABLE = False
+        logging.warning("model_explainability.py not found. Explainability functionality disabled.")
 
 warnings.filterwarnings('ignore')
 

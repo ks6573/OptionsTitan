@@ -66,8 +66,9 @@ class DataPreprocessor:
             if col in df_clean.columns:
                 df_clean[col] = df_clean[col].interpolate()
         
-        # Fill remaining with median
-        df_clean = df_clean.fillna(df_clean.median())
+        # Fill remaining with median (numeric columns only; avoid timestamp/object columns)
+        median_vals = df_clean.median(numeric_only=True)
+        df_clean = df_clean.fillna(median_vals)
         
         return df_clean
     
@@ -1070,8 +1071,11 @@ print("INTEGRATING WITH OPTIONSTITAN PRODUCTION PIPELINE")
 print("="*60)
 
 try:
-    # Import the integrated pipeline
-    from .integrated_pipeline import ProductionPipeline
+    # Import the integrated pipeline (relative when run as package, else same-dir)
+    try:
+        from .integrated_pipeline import ProductionPipeline
+    except ImportError:
+        from integrated_pipeline import ProductionPipeline
     
     # Create pipeline configuration
     pipeline_config = {

@@ -127,8 +127,8 @@ uv run python main.py
 # Verify installation
 uv run python verify_installation.py
 
-# Data collection
-uv run python -m src.data_collection.data_fetcher --ticker AAPL
+# Validate free data infrastructure
+uv run python test_free_data_migration.py
 ```
 
 ### Without uv Prefix
