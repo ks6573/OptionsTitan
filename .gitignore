@@ -98,6 +98,7 @@ ipython_config.py
 # Models, Data & Artifacts
 # ===================================================================
 # Keep directory structure but ignore large files
+*.pkl
 models/*.pkl
 models/*.h5
 models/*.pt
