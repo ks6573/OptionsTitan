@@ -393,6 +393,8 @@ def fetch_sample_data(
         'min_open_interest': 100,
     }
 
+    saved_files = 0
+
     for ticker in tickers:
         ticker_lower = ticker.lower()
         print(f"  Fetching {ticker.upper()} options...")
@@ -418,6 +420,12 @@ def fetch_sample_data(
         out_file = data_path / f"{ticker_lower}_{date_min[:4]}_q4_options.csv"
         norm.to_csv(out_file, index=False, float_format='%.6f')
         print(f"  Saved {len(norm):,} rows to {out_file}")
+        saved_files += 1
+
+    if saved_files == 0:
+        logger.error("No sample files were created. Check filters/date range and retry.")
+        return False
+
     return True
 
 
@@ -447,13 +455,19 @@ def main(data_dir: str = 'data/processed_csv', fetch_sample: bool = False):
             print("\nTo fetch sample data automatically, run:")
             print("  python -m src.Training_MultiTicker --fetch-sample")
             return
-        df = loader.load_all_tickers()
+        try:
+            df = loader.load_all_tickers()
+        except (FileNotFoundError, ValueError) as e:
+            print(f"\n❌ Error: {e}")
+            print("\nTo fetch sample data automatically, run:")
+            print("  python -m src.Training_MultiTicker --fetch-sample")
+            return
     else:
         print("\n[1/7] Loading multi-ticker dataset...")
         loader = MultiTickerDataLoader(data_dir=data_dir)
         try:
             df = loader.load_all_tickers()
-        except FileNotFoundError as e:
+        except (FileNotFoundError, ValueError) as e:
             print(f"\n❌ Error: {e}")
             return
     
@@ -500,6 +514,13 @@ def main(data_dir: str = 'data/processed_csv', fetch_sample: bool = False):
     # Step 5: Feature selection
     print("\n[5/7] Selecting features...")
     
+    # Backward/forward compatibility: migration introduced spy_return_1d while
+    # training code historically used spy_return_5min.
+    if 'spy_return_5min' not in df_final.columns and 'spy_return_1d' in df_final.columns:
+        df_final['spy_return_5min'] = df_final['spy_return_1d']
+    elif 'spy_return_1d' not in df_final.columns and 'spy_return_5min' in df_final.columns:
+        df_final['spy_return_1d'] = df_final['spy_return_5min']
+
     feature_columns = [
         # Original features
         'price', 'option_price', 'strike_distance', 'time_to_expiry',

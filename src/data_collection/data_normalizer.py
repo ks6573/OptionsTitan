@@ -419,6 +419,7 @@ class MultiYearNormalizer:
         """
         if 'price' not in df.columns:
             df['spy_return_5min'] = 0.0
+            df['spy_return_1d'] = 0.0
             return df
         
         df = df.copy()
@@ -431,6 +432,7 @@ class MultiYearNormalizer:
         
         # Use daily return as proxy for short-term return
         df['spy_return_5min'] = df['daily_return'].fillna(0.0)
+        df['spy_return_1d'] = df['spy_return_5min']
         
         return df
     
@@ -517,7 +519,7 @@ class MultiYearNormalizer:
                     df[col] = 20.0
                 elif col == 'rsi':
                     df[col] = 50.0
-                elif col in ['spy_return_5min', 'strike_distance']:
+                elif col in ['spy_return_5min', 'spy_return_1d', 'strike_distance']:
                     df[col] = 0.0
                 elif col == 'time_to_expiry':
                     df[col] = 30

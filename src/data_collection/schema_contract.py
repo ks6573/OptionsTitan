@@ -141,6 +141,11 @@ def validate_training_schema(
         (is_valid, list_of_errors)
     """
     errors = []
+    df = df.copy()
+
+    # Backward compatibility: legacy pipeline used spy_return_5min.
+    if "spy_return_1d" not in df.columns and "spy_return_5min" in df.columns:
+        df["spy_return_1d"] = df["spy_return_5min"]
     
     # Check required columns present
     missing_cols = set(TRAINING_SCHEMA.keys()) - set(df.columns)
