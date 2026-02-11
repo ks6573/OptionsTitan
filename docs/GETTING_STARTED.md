@@ -86,7 +86,7 @@ python options_gui_qt.py
 3. Click "Analyze Strategies"
 4. Review 5 personalized recommendations
 
-📖 **[GUI Quick Start](docs/gui/GUI_QUICKSTART.md)**
+**[GUI Guide](docs/gui/GUI_GUIDE.md)**
 
 ---
 
