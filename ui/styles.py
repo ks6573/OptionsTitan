@@ -185,6 +185,18 @@ def get_dark_theme_stylesheet():
             background-color: #dd3333;
         }
         
+        QPushButton[chip="true"] {
+            background-color: #2d2d2d;
+            color: #b0b0b0;
+            font-size: 11pt;
+        }
+        
+        QPushButton[chip="true"]:hover {
+            background-color: #3d3d3d;
+            color: #ffffff;
+            border: 1px solid #0078d4;
+        }
+        
         /* Group Box */
         QGroupBox {
             border: 2px solid #3d3d3d;

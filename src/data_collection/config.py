@@ -197,6 +197,35 @@ PARQUET_CONFIG: Dict = {
     'catalog_url': 'https://static.philippdubach.com/data/options/_catalog.parquet',
 }
 
+# Alias for pipeline compatibility (cache_dir, normalized_dir)
+PARQUET_DATASET: Dict = {
+    'base_url': 'https://static.philippdubach.com/data/options',
+    'catalog_url': 'https://static.philippdubach.com/data/options/_catalog.parquet',
+    'cache_dir': 'data/cache',
+    'normalized_dir': 'data/normalized',
+}
+
+# ============================================================================
+# SAMPLING MODES (Training Pipeline)
+# ============================================================================
+
+SAMPLING_MODES: Dict = {
+    'MODE_A': {  # Default: 30-60 DTE, ATM +/- 5%, liquidity filtered
+        'dte_min': 30,
+        'dte_max': 60,
+        'moneyness_pct': 0.05,
+        'min_volume': 1,
+        'min_open_interest': 100,
+    },
+    'MODE_B': {  # Richer: multiple DTE buckets, +/- 10% moneyness
+        'dte_min': 7,
+        'dte_max': 180,
+        'moneyness_pct': 0.10,
+        'min_volume': 1,
+        'min_open_interest': 100,
+    },
+}
+
 # ============================================================================
 # REMOTE QUERY FILTERS (Predicate Pushdown Configuration)
 # ============================================================================
@@ -263,6 +292,8 @@ STORAGE_CONFIG: Dict = {
     'raw_parquet_dir': 'data/raw_parquet',
     'processed_csv_dir': 'data/processed_csv',
     'metadata_dir': 'data/metadata',
+    'cache_dir': 'data/cache',
+    'normalized_dir': 'data/normalized',
     
     # Parquet partitioning scheme
     # Format: ticker=XXX/year=YYYY/
@@ -288,14 +319,13 @@ REQUIRED_COLUMNS: List[str] = [
     'volume',             # Option volume
     'implied_volatility', # IV (pre-calculated in philippdubach dataset)
     'vix_level',          # VIX index level
-    'spy_return_1d',      # Daily return proxy (RENAMED from spy_return_5min)
+    'spy_return_5min',    # Daily SPY return proxy (Training.py compat; no intraday)
     'rsi',                # RSI indicator on underlying
     'timestamp',          # YYYY-MM-DD HH:MM:SS
 ]
 
-# IMPORTANT: spy_return_5min has been RENAMED to spy_return_1d
-# This is because the philippdubach dataset is daily EOD only (no intraday data).
-# Training.py and Training_MultiTicker.py must be updated accordingly.
+# spy_return_5min: populated with daily SPY close-to-close return (proxy for intraday).
+# Training.py expects this column name. Schema contract accepts spy_return_1d as alias.
 
 # Additional columns to capture (not required by Training.py but useful)
 OPTIONAL_COLUMNS: List[str] = [

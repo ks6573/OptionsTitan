@@ -7,6 +7,79 @@ from PySide6.QtCore import QThread, Signal, QObject
 import traceback
 
 
+class TickerValidationWorker(QThread):
+    """
+    Validates a stock symbol via yfinance in a background thread.
+    Does not block the UI.
+    """
+
+    validation_passed = Signal(str)
+    validation_failed = Signal(str, str)  # symbol, error_message
+
+    def __init__(self, symbol: str):
+        super().__init__()
+        self.symbol = (symbol or "").strip().upper()
+
+    def run(self):
+        if not self.symbol:
+            self.validation_failed.emit(self.symbol, "Symbol cannot be empty.")
+            return
+        try:
+            import yfinance as yf
+            ticker = yf.Ticker(self.symbol)
+            hist = ticker.history(period="5d")
+            if hist is None or hist.empty:
+                self.validation_failed.emit(
+                    self.symbol,
+                    f"No market data found for '{self.symbol}'. The symbol may be invalid or delisted.",
+                )
+                return
+            self.validation_passed.emit(self.symbol)
+        except Exception as e:
+            self.validation_failed.emit(
+                self.symbol,
+                f"Validation failed: {str(e)}",
+            )
+
+
+class CoverageCheckWorker(QThread):
+    """
+    Checks dataset coverage for a symbol in background.
+    Emits coverage_result(str, bool) when done.
+    """
+
+    coverage_result = Signal(str, bool)  # symbol, has_coverage
+
+    def __init__(self, symbol: str):
+        super().__init__()
+        self.symbol = (symbol or "").strip()
+
+    def run(self):
+        try:
+            from src.data_collection.dataset_catalog import has_dataset_coverage
+            has_coverage = has_dataset_coverage(self.symbol)
+            self.coverage_result.emit(self.symbol, has_coverage)
+        except Exception:
+            self.coverage_result.emit(self.symbol, False)
+
+
+class CatalogLoaderWorker(QThread):
+    """
+    Loads available tickers from dataset catalog in background.
+    Used to populate autocomplete.
+    """
+
+    catalog_loaded = Signal(object)  # set of ticker strings
+
+    def run(self):
+        try:
+            from src.data_collection.dataset_catalog import get_available_dataset_tickers
+            tickers = get_available_dataset_tickers()
+            self.catalog_loaded.emit(tickers)
+        except Exception:
+            self.catalog_loaded.emit(set())
+
+
 class AnalysisWorker(QThread):
     """
     Worker thread for running options strategy analysis in the background.

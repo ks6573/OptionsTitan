@@ -44,72 +44,84 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 class MultiTickerDataLoader:
-    """Load and combine multi-ticker datasets"""
-    
-    def __init__(self, data_dir: str = 'data/processed_csv'):
-        self.data_dir = Path(data_dir)
-        
+    """Load and combine multi-ticker datasets from Parquet or CSV."""
+
+    def __init__(self, data_dir: str = None):
+        # Prefer data/normalized (Parquet), fallback to data/processed_csv
+        norm_dir = Path('data/normalized')
+        csv_dir = Path('data/processed_csv')
+
+        if data_dir and str(data_dir).strip():
+            self.data_dir = Path(data_dir)
+            self.use_parquet = 'normalized' in str(data_dir) or (self.data_dir / 'ticker=SPY').exists()
+        elif norm_dir.exists() and any(norm_dir.glob('ticker=*/*.parquet')):
+            self.data_dir = norm_dir
+            self.use_parquet = True
+        elif csv_dir.exists():
+            self.data_dir = csv_dir
+            self.use_parquet = False
+        else:
+            self.data_dir = csv_dir
+            self.use_parquet = False
+
         if not self.data_dir.exists():
             raise FileNotFoundError(
-                f"Data directory not found: {data_dir}\n\n"
+                f"Data directory not found: {self.data_dir}\n\n"
                 "To collect training data using FREE philippdubach dataset:\n"
                 "  1. Run validation: python test_free_data_migration.py\n"
-                "  2. Query data: See docs/DATA_COLLECTION_GUIDE.md\n"
-                "  3. Or use remote_query module:\n"
-                "     from src.data_collection.remote_query import batch_query_tickers\n\n"
+                "  2. Fetch data: python -m src.data_collection.data_fetcher --start 2019-01-01\n"
+                "  3. Or use --fetch-sample: python -m src.Training_MultiTicker --fetch-sample\n\n"
                 "See README_DATA_COLLECTION.md for complete guide."
             )
-    
+
     def load_single_ticker(self, ticker: str) -> pd.DataFrame:
-        """Load data for a single ticker"""
-        # Find CSV files matching ticker
-        pattern = f"{ticker.lower()}_*_options.csv"
-        files = list(self.data_dir.glob(pattern))
-        
+        """Load data for a single ticker (Parquet or CSV)."""
+        if self.use_parquet:
+            parquet_dir = self.data_dir / f"ticker={ticker.upper()}"
+            files = list(parquet_dir.glob("year=*/*.parquet")) if parquet_dir.exists() else []
+        else:
+            pattern = f"{ticker.lower()}_*_options.csv"
+            files = list(self.data_dir.glob(pattern))
+
         if not files:
-            logger.warning(f"No data files found for {ticker}")
+            logger.warning("No data files found for %s", ticker)
             return pd.DataFrame()
-        
-        # Load and combine all files for this ticker
+
         dfs = []
-        for file in files:
-            df = pd.read_csv(file)
-            df['ticker'] = ticker
+        for f in files:
+            df = pd.read_parquet(f) if self.use_parquet else pd.read_csv(f)
+            if 'ticker' not in df.columns:
+                df['ticker'] = ticker
             dfs.append(df)
-        
+
         combined = pd.concat(dfs, ignore_index=True)
-        logger.info(f"Loaded {len(combined)} rows for {ticker}")
-        
+        logger.info("Loaded %d rows for %s", len(combined), ticker)
         return combined
-    
+
     def load_all_tickers(self, tickers: List[str] = None) -> pd.DataFrame:
-        """Load data for all tickers"""
+        """Load data for all tickers."""
         if tickers is None:
-            # Auto-detect tickers from CSV files
-            csv_files = list(self.data_dir.glob('*_options.csv'))
-            tickers = list(set([
-                f.name.split('_')[0].upper()
-                for f in csv_files
-            ]))
-            logger.info(f"Auto-detected {len(tickers)} tickers: {tickers}")
-        
+            if self.use_parquet:
+                ticker_dirs = [d for d in self.data_dir.iterdir() if d.is_dir() and d.name.startswith('ticker=')]
+                tickers = [d.name.replace('ticker=', '') for d in ticker_dirs]
+            else:
+                csv_files = list(self.data_dir.glob('*_options.csv'))
+                tickers = list(set(f.name.split('_')[0].upper() for f in csv_files))
+            logger.info("Auto-detected %d tickers: %s", len(tickers), tickers)
+
         all_data = []
-        
         for ticker in tickers:
             df = self.load_single_ticker(ticker)
             if not df.empty:
                 all_data.append(df)
-        
+
         if not all_data:
             raise ValueError("No data loaded for any ticker")
-        
+
         combined = pd.concat(all_data, ignore_index=True)
-        
-        logger.info(f"\nLoaded multi-ticker dataset:")
-        logger.info(f"  Total rows: {len(combined)}")
-        logger.info(f"  Tickers: {len(tickers)}")
-        logger.info(f"  Date range: {combined['timestamp'].min()} to {combined['timestamp'].max()}")
-        
+        logger.info("Loaded multi-ticker dataset: %d rows, %d tickers", len(combined), len(tickers))
+        if 'timestamp' in combined.columns:
+            logger.info("Date range: %s to %s", combined['timestamp'].min(), combined['timestamp'].max())
         return combined
     
     def filter_by_date_range(self, 
@@ -644,7 +656,8 @@ def main(data_dir: str = 'data/processed_csv', fetch_sample: bool = False):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Multi-ticker options model training')
-    parser.add_argument('--data-dir', default='data/processed_csv', help='Directory with ticker CSVs (default: data/processed_csv)')
+    parser.add_argument('--data-dir', default='', help='Directory (default: auto-detect data/normalized or data/processed_csv)')
     parser.add_argument('--fetch-sample', action='store_true', help='If data dir is missing, fetch sample data from FREE philippdubach dataset (SPY + AAPL, 2024 Q4)')
     args = parser.parse_args()
-    main(data_dir=args.data_dir, fetch_sample=args.fetch_sample)
+    data_dir = args.data_dir.strip() or None
+    main(data_dir=data_dir, fetch_sample=args.fetch_sample)

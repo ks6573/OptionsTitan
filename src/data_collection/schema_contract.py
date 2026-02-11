@@ -6,13 +6,18 @@ silent breakage if the upstream dataset evolves. This is a critical
 defensive layer for production-grade data ingestion.
 
 Key validations:
-- Required columns present
+- Required columns present (options and underlying)
 - Correct dtypes
 - Uniqueness constraints
 - Schema drift detection
 """
 
 import pandas as pd
+
+
+class SchemaValidationError(ValueError):
+    """Raised when schema validation fails."""
+    pass
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 import logging
@@ -55,16 +60,59 @@ TRAINING_SCHEMA = {
     "volume": "int64",
     "implied_volatility": "float64",
     "vix_level": "float64",
-    "spy_return_1d": "float64",  # RENAMED from spy_return_5min
+    "spy_return_5min": "float64",  # Daily SPY return proxy (Training.py expects this)
     "rsi": "float64",
     "timestamp": "datetime64[ns]",
 }
 
-# Critical fields that must not have nulls
+# Critical fields that must not have nulls (options)
 CRITICAL_FIELDS = [
     "contract_id", "symbol", "expiration", "strike", "type", "date",
     "volume", "open_interest", "bid", "ask", "implied_volatility"
 ]
+
+# Underlying schema (at least date + price column)
+UNDERLYING_REQUIRED = ["date"]
+UNDERLYING_PRICE_COLS = ["close", "adjusted_close", "Close"]
+
+
+def validate_underlying_schema(
+    df: pd.DataFrame,
+    strict: bool = True
+) -> Tuple[bool, List[str]]:
+    """
+    Validate underlying price DataFrame.
+
+    Args:
+        df: DataFrame with date and price column (close, adjusted_close, or Close)
+        strict: If True, fail on violation
+
+    Returns:
+        (is_valid, list_of_errors)
+    """
+    errors = []
+    if df.empty:
+        errors.append("Underlying DataFrame is empty")
+        return False, errors
+
+    if "date" not in df.columns:
+        errors.append("Missing required column: date")
+
+    has_price = any(c in df.columns for c in UNDERLYING_PRICE_COLS)
+    if not has_price:
+        errors.append(f"Missing price column. Expected one of: {UNDERLYING_PRICE_COLS}")
+
+    if errors and strict:
+        for e in errors:
+            logger.error("Underlying schema: %s", e)
+        return False, errors
+    elif errors:
+        for e in errors:
+            logger.warning("Underlying schema: %s", e)
+        return False, errors
+
+    logger.info("Underlying schema validation passed")
+    return True, []
 
 
 def validate_philippdubach_schema(
@@ -143,9 +191,9 @@ def validate_training_schema(
     errors = []
     df = df.copy()
 
-    # Backward compatibility: legacy pipeline used spy_return_5min.
-    if "spy_return_1d" not in df.columns and "spy_return_5min" in df.columns:
-        df["spy_return_1d"] = df["spy_return_5min"]
+    # Backward compatibility: some pipelines use spy_return_1d.
+    if "spy_return_5min" not in df.columns and "spy_return_1d" in df.columns:
+        df["spy_return_5min"] = df["spy_return_1d"]
     
     # Check required columns present
     missing_cols = set(TRAINING_SCHEMA.keys()) - set(df.columns)

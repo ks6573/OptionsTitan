@@ -85,6 +85,7 @@ class OptionsTitanMainWindow(QMainWindow):
         self.input_panel = InputPanel()
         self.input_panel.analyze_requested.connect(self.on_analyze_requested)
         self.input_panel.clear_requested.connect(self.on_clear_requested)
+        self.input_panel.validation_failed.connect(self.on_validation_failed)
         left_sidebar_layout.addWidget(self.input_panel)
         
         # Spacer to push everything to top
@@ -204,6 +205,17 @@ class OptionsTitanMainWindow(QMainWindow):
         stylesheet = get_dark_theme_stylesheet()
         self.setStyleSheet(stylesheet)
     
+    @Slot(str, str)
+    def on_validation_failed(self, symbol, error_msg):
+        """Handle ticker validation failure (invalid symbol, no data)."""
+        QMessageBox.warning(
+            self,
+            "Invalid Symbol",
+            f"Cannot analyze {symbol or 'this symbol'}:\n\n{error_msg}\n\n"
+            "Please enter a valid stock symbol with available market data.",
+        )
+        self.update_status("Validation failed")
+
     @Slot(str, float, float, float, float)
     def on_analyze_requested(self, symbol, liquidity, max_risk, target_profit, max_loss):
         """Handle analysis request from input panel"""
@@ -256,7 +268,11 @@ class OptionsTitanMainWindow(QMainWindow):
     def on_analysis_complete(self, stock_data, strategies):
         """Handle successful analysis completion"""
         self.results_widget.display_results(stock_data, strategies)
-        self.update_status(f"Analysis complete - {len(strategies)} strategies found")
+        has_coverage = self.input_panel.has_dataset_coverage()
+        if has_coverage:
+            self.update_status(f"Analysis complete - {len(strategies)} strategies found (options history available)")
+        else:
+            self.update_status(f"Analysis complete - {len(strategies)} strategies found (underlying-only mode)")
     
     @Slot(str)
     def on_analysis_error(self, error_msg):

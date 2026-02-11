@@ -406,34 +406,48 @@ class MultiYearNormalizer:
         df = df.merge(self.vix_cache, on='date', how='left')
         
         # Forward fill missing VIX values
-        df['vix_level'].fillna(method='ffill', inplace=True)
+        df['vix_level'] = df['vix_level'].ffill()
         df['vix_level'].fillna(20.0, inplace=True)  # Default for any remaining
         
         return df
     
     def _calculate_returns(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Calculate returns as proxy for spy_return_5min
-        
-        Uses daily returns since dataset is EOD (no intraday data)
+        Compute spy_return_5min: daily SPY return proxy (close-to-close).
+
+        Column kept as spy_return_5min for Training.py compatibility.
+        Dataset is daily EOD only - no intraday data. SPY from yfinance.
         """
-        if 'price' not in df.columns:
+        if df.empty or 'date' not in df.columns:
             df['spy_return_5min'] = 0.0
-            df['spy_return_1d'] = 0.0
             return df
-        
+
         df = df.copy()
-        
-        # Sort by date to ensure proper return calculation
-        df = df.sort_values('date')
-        
-        # Calculate daily return on underlying
-        df['daily_return'] = df['price'].pct_change()
-        
-        # Use daily return as proxy for short-term return
-        df['spy_return_5min'] = df['daily_return'].fillna(0.0)
-        df['spy_return_1d'] = df['spy_return_5min']
-        
+        df['date'] = pd.to_datetime(df['date'])
+        dates = df['date'].drop_duplicates().sort_values()
+        start_d = dates.min() - timedelta(days=5)
+        end_d = dates.max() + timedelta(days=1)
+
+        try:
+            spy = yf.download('SPY', start=start_d, end=end_d, progress=False)
+            spy = spy.reset_index() if not spy.empty else None
+            if spy is not None and len(spy) > 0:
+                date_col = 'Date' if 'Date' in spy.columns else spy.columns[0]
+                close_col = 'Close' if 'Close' in spy.columns else 'Adj Close'
+                if close_col in spy.columns:
+                    spy['date'] = pd.to_datetime(spy[date_col]).dt.normalize()
+                    spy['spy_return_5min'] = spy[close_col].pct_change().fillna(0.0)
+                    spy_map = spy.set_index('date')['spy_return_5min'].to_dict()
+                    df['spy_return_5min'] = df['date'].dt.normalize().map(lambda d: spy_map.get(d, 0.0))
+                else:
+                    raise ValueError("No Close column")
+            else:
+                raise ValueError("Empty SPY data")
+        except Exception as e:
+            logger.warning("SPY fetch failed, using underlying return: %s", e)
+            df = df.sort_values('date')
+            df['spy_return_5min'] = df['price'].pct_change().fillna(0.0) if 'price' in df.columns else 0.0
+
         return df
     
     def _calculate_rsi(self, df: pd.DataFrame, underlying_prices: pd.DataFrame) -> pd.DataFrame:
@@ -476,7 +490,7 @@ class MultiYearNormalizer:
             df = df.merge(underlying[['date', 'rsi']], on='date', how='left')
             
             # Fill missing RSI
-            df['rsi'].fillna(method='ffill', inplace=True)
+            df['rsi'] = df['rsi'].ffill()
             df['rsi'].fillna(50.0, inplace=True)
         else:
             df['rsi'] = 50.0
@@ -519,7 +533,7 @@ class MultiYearNormalizer:
                     df[col] = 20.0
                 elif col == 'rsi':
                     df[col] = 50.0
-                elif col in ['spy_return_5min', 'spy_return_1d', 'strike_distance']:
+                elif col in ['spy_return_5min', 'strike_distance']:
                     df[col] = 0.0
                 elif col == 'time_to_expiry':
                     df[col] = 30
