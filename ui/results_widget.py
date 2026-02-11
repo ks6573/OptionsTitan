@@ -4,13 +4,14 @@ Tabbed interface for displaying analysis results
 """
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, 
-    QTextEdit, QLabel, QScrollArea, QPushButton, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout, QTabWidget,
+    QTextEdit, QLabel, QScrollArea
 )
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont, QTextCharFormat, QColor
 from datetime import datetime
+
 from .strategy_card import StrategyCard
+from .charts_widget import ChartsWidget
 
 
 class ResultsWidget(QTabWidget):
@@ -49,126 +50,96 @@ class ResultsWidget(QTabWidget):
         self.show_welcome_message()
     
     def create_overview_tab(self):
-        """Create the overview tab with market data"""
+        """Create the overview tab with charts + market data"""
         tab = QWidget()
         layout = QVBoxLayout(tab)
-        
-        # Text display (export buttons now in main header)
+        try:
+            from .ui_utils import get_responsive_spacing, get_screen_percentage_height
+            layout.setSpacing(get_responsive_spacing())
+            text_min_h = max(220, int(get_screen_percentage_height(0.28)))
+        except Exception:
+            layout.setSpacing(16)
+            text_min_h = 280
+
+        self.charts_widget = ChartsWidget()
+        layout.addWidget(self.charts_widget)
+
         self.overview_text = QTextEdit()
         self.overview_text.setReadOnly(True)
-        self.overview_text.setMinimumHeight(400)
+        self.overview_text.setMinimumHeight(text_min_h)
         layout.addWidget(self.overview_text)
-        
+
         return tab
     
     def create_strategies_tab(self):
-        """Create the strategies tab with expandable cards"""
+        """Create the strategies tab with scrollable strategy cards"""
         tab = QWidget()
         layout = QVBoxLayout(tab)
-        
-        # Scroll area for strategy cards
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        
+
+        try:
+            from .ui_utils import get_responsive_spacing
+            card_spacing = get_responsive_spacing()
+        except Exception:
+            card_spacing = 14
+
         self.strategies_container = QWidget()
         self.strategies_layout = QVBoxLayout(self.strategies_container)
-        self.strategies_layout.setSpacing(15)
+        self.strategies_layout.setSpacing(card_spacing)
         self.strategies_layout.addStretch()
-        
+
         scroll.setWidget(self.strategies_container)
         layout.addWidget(scroll)
-        
         return tab
     
     def create_ai_insights_tab(self):
         """Create the AI insights tab"""
         tab = QWidget()
         layout = QVBoxLayout(tab)
-        
-        # AI insights text
+        try:
+            from .ui_utils import get_screen_percentage_height
+            ai_min_h = max(250, int(get_screen_percentage_height(0.32)))
+        except Exception:
+            ai_min_h = 320
+
         self.ai_insights_text = QTextEdit()
         self.ai_insights_text.setReadOnly(True)
-        self.ai_insights_text.setMinimumHeight(400)
+        self.ai_insights_text.setMinimumHeight(ai_min_h)
         layout.addWidget(self.ai_insights_text)
-        
         return tab
     
     def show_welcome_message(self):
         """Display welcome message before analysis"""
         welcome = """
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                   Welcome to OptionsTitan Strategy Analyzer                  ║
-║                     AI-Powered Options Strategy Analysis                     ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+OPTIONSTITAN — Strategy Analyzer
 
+Enter a stock symbol, set your risk parameters, and click "Analyze Strategies"
+to get personalized options strategy recommendations.
 
-WHAT THIS TOOL DOES:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • Top 5 strategies ranked by fit score
+  • Setup instructions and risk/reward analysis
+  • Market condition alignment
+  • AI insights (when LLAMA API key is configured)
 
-This professional-grade analyzer helps you identify optimal options strategies based on:
-
-  • Your risk tolerance and portfolio size
-  • Current market conditions and volatility
-  • Stock-specific technical and fundamental analysis
-  • AI-generated market insights (when LLAMA AI is enabled)
-
-
-HOW TO USE:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  1. Enter your stock symbol (e.g., SPY, AAPL, TSLA, QQQ)
-  
-  2. Set your portfolio liquidity (total available trading capital)
-  
-  3. Define your risk parameters:
-     - Max Risk %: Maximum percentage of portfolio to risk per trade
-     - Target Profit %: Your desired profit target
-     - Max Loss %: Maximum acceptable loss threshold
-  
-  4. Click "Analyze Strategies" to receive personalized recommendations
-
-
-WHAT YOU'LL GET:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ✓ Top 5 strategies ranked by fit score
-  ✓ Detailed setup instructions for each strategy
-  ✓ Comprehensive risk/reward analysis
-  ✓ Market condition alignment assessment
-  ✓ Clear reasoning for each recommendation
-  ✓ AI-powered insights and market commentary (with LLAMA AI)
-
-
-⚠️  IMPORTANT DISCLAIMER:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    This tool is for EDUCATIONAL PURPOSES ONLY. Options trading involves
-    substantial risk of loss and is not suitable for all investors.
-    
-    Past performance does not guarantee future results. Always conduct your
-    own research and consult with a licensed financial advisor before making
-    any investment decisions.
-    
-    By using this tool, you acknowledge that you understand these risks and
-    accept full responsibility for your trading decisions.
-
-
-Ready to begin? Enter your parameters in the left panel and click "Analyze Strategies"!
+⚠️  For educational purposes only. Options involve substantial risk.
+    Consult a financial advisor before trading.
 """
-        
-        self.overview_text.setPlainText(welcome)
+        self.overview_text.setPlainText(welcome.strip())
         self.ai_insights_text.setPlainText(
-            "AI Insights will appear here after you run an analysis.\n\n"
-            "To enable LLAMA AI-powered market commentary, ensure your LLAMA_API_KEY\n"
-            "is properly configured in the .env file."
+            "AI insights will appear here after you run an analysis.\n\n"
+            "Configure LLAMA_API_KEY in .env to enable AI-powered commentary."
         )
     
     def display_results(self, stock_data, strategies):
         """Display analysis results across all tabs"""
         self.stock_data = stock_data
         self.strategies = strategies
-        
+
+        # Update charts (price + fit scores)
+        self.charts_widget.update_charts(stock_data, strategies)
+
         # Update Overview tab
         self.update_overview_tab(stock_data, strategies)
         
@@ -373,7 +344,8 @@ AI reasoning not available for this strategy.
     def clear_results(self):
         """Clear all results and show welcome message"""
         self.show_welcome_message()
-        
+        self.charts_widget.update_charts(None, [])
+
         # Clear strategy cards
         while self.strategies_layout.count() > 1:
             item = self.strategies_layout.takeAt(0)

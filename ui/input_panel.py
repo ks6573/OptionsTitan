@@ -15,6 +15,25 @@ from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QValidator
 import re
 
+
+def _responsive_values():
+    """Get responsive sizing values. Lazy import to avoid circular deps."""
+    try:
+        from .ui_utils import (
+            get_screen_size,
+            get_screen_percentage_height,
+            get_responsive_spacing,
+        )
+        width, height = get_screen_size()
+        spacing = get_responsive_spacing()
+        analyze_h = max(42, min(60, int(height * 0.055)))
+        secondary_h = max(32, min(50, int(height * 0.045)))
+        chip_w = max(42, min(60, int(width * 0.028)))
+        margins = max(16, min(28, int(width * 0.012)))
+        return spacing, analyze_h, secondary_h, chip_w, margins
+    except Exception:
+        return 16, 50, 40, 50, 20
+
 # Favorites for Quick Select
 FAVORITES = ["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "TSLA", "NVDA", "META", "AMD"]
 RECENT_SEARCHES_PATH = Path("data/cache/recent_searches.json")
@@ -91,15 +110,17 @@ class InputPanel(QWidget):
 
     def setup_ui(self):
         """Create the compact dashboard-style UI layout"""
+        spacing, analyze_h, secondary_h, chip_w, margins = _responsive_values()
+
         layout = QVBoxLayout(self)
-        layout.setSpacing(20)
+        layout.setSpacing(spacing)
         layout.setContentsMargins(0, 0, 0, 0)
 
         input_group = QGroupBox("Strategy Parameters")
         input_group.setProperty("dashboard_card", True)
         input_layout = QVBoxLayout(input_group)
-        input_layout.setSpacing(18)
-        input_layout.setContentsMargins(20, 25, 20, 20)
+        input_layout.setSpacing(max(12, spacing - 2))
+        input_layout.setContentsMargins(margins, margins + 4, margins, margins)
 
         # Stock Symbol row
         symbol_label = QLabel("Stock Symbol")
@@ -124,9 +145,16 @@ class InputPanel(QWidget):
 
         # Coverage badge
         self.coverage_badge = QLabel("")
-        self.coverage_badge.setStyleSheet(
-            "font-size: 11px; padding: 4px 8px; border-radius: 4px;"
-        )
+        try:
+            from .ui_utils import get_responsive_font_size
+            fs = get_responsive_font_size('small')
+            self.coverage_badge.setStyleSheet(
+                f"font-size: {fs}px; padding: 4px 8px; border-radius: 4px;"
+            )
+        except Exception:
+            self.coverage_badge.setStyleSheet(
+                "font-size: 11px; padding: 4px 8px; border-radius: 4px;"
+            )
         self.coverage_badge.setToolTip(
             "Options history available: Dataset has historical options data.\n"
             "Underlying-only mode: Live/underlying data only."
@@ -137,13 +165,19 @@ class InputPanel(QWidget):
         # Quick Select chips
         quick_label = QLabel("Quick Select")
         quick_label.setProperty("input_label", True)
-        quick_label.setStyleSheet("font-size: 12px; margin-top: 4px;")
+        try:
+            from .ui_utils import get_responsive_font_size
+            fs = get_responsive_font_size('body')
+            quick_label.setStyleSheet(f"font-size: {fs}px; margin-top: 4px;")
+        except Exception:
+            quick_label.setStyleSheet("font-size: 12px; margin-top: 4px;")
         input_layout.addWidget(quick_label)
         chips_layout = QHBoxLayout()
-        chips_layout.setSpacing(6)
+        chips_layout.setSpacing(max(4, spacing // 3))
         for fav in FAVORITES[:8]:
             btn = QPushButton(fav)
-            btn.setFixedWidth(50)
+            btn.setMinimumWidth(chip_w)
+            btn.setMaximumWidth(chip_w + 12)
             btn.setProperty("chip", True)
             btn.setCursor(Qt.PointingHandCursor)
             btn.clicked.connect(lambda checked, s=fav: self._set_symbol(s))
@@ -199,19 +233,19 @@ class InputPanel(QWidget):
         # Action Buttons
         self.analyze_button = QPushButton("🔍 Analyze Strategies")
         self.analyze_button.setProperty("primary_action", True)
-        self.analyze_button.setMinimumHeight(55)
+        self.analyze_button.setMinimumHeight(analyze_h)
         self.analyze_button.setCursor(Qt.PointingHandCursor)
         layout.addWidget(self.analyze_button)
 
         secondary_layout = QHBoxLayout()
-        secondary_layout.setSpacing(10)
+        secondary_layout.setSpacing(spacing // 2)
         self.clear_button = QPushButton("🗑️ Clear")
         self.clear_button.setProperty("secondary", True)
-        self.clear_button.setMinimumHeight(45)
+        self.clear_button.setMinimumHeight(secondary_h)
         self.clear_button.setCursor(Qt.PointingHandCursor)
         self.defaults_button = QPushButton("↺ Reset")
         self.defaults_button.setProperty("secondary", True)
-        self.defaults_button.setMinimumHeight(45)
+        self.defaults_button.setMinimumHeight(secondary_h)
         self.defaults_button.setCursor(Qt.PointingHandCursor)
         secondary_layout.addWidget(self.clear_button)
         secondary_layout.addWidget(self.defaults_button)
@@ -275,22 +309,31 @@ class InputPanel(QWidget):
         current = self.symbol_combo.currentText().strip()
         if current.upper() != symbol.upper():
             return
+        try:
+            from .ui_utils import get_responsive_font_size
+            fs = get_responsive_font_size('small')
+        except Exception:
+            fs = 11
+        base_css = f"font-size: {fs}px; padding: 4px 8px; border-radius: 4px;"
         if has_coverage:
             self.coverage_badge.setText("Options history available")
             self.coverage_badge.setStyleSheet(
-                "font-size: 11px; padding: 4px 8px; border-radius: 4px; "
-                "background: #1a472a; color: #4ade80;"
+                f"{base_css} background: #1a472a; color: #4ade80;"
             )
         else:
             self.coverage_badge.setText("Underlying-only mode")
             self.coverage_badge.setStyleSheet(
-                "font-size: 11px; padding: 4px 8px; border-radius: 4px; "
-                "background: #3d3d3d; color: #94a3b8;"
+                f"{base_css} background: #3d3d3d; color: #94a3b8;"
             )
 
     def _update_coverage_badge(self, _dummy: str):
         self.coverage_badge.setText("")
-        self.coverage_badge.setStyleSheet("font-size: 11px; padding: 4px 8px;")
+        try:
+            from .ui_utils import get_responsive_font_size
+            fs = get_responsive_font_size('small')
+        except Exception:
+            fs = 11
+        self.coverage_badge.setStyleSheet(f"font-size: {fs}px; padding: 4px 8px;")
 
     def on_analyze_clicked(self):
         symbol = self.symbol_combo.currentText().strip().upper()

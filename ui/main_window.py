@@ -17,6 +17,11 @@ from .input_panel import InputPanel
 from .results_widget import ResultsWidget
 from .workers import AnalysisWorker
 from .styles import get_dark_theme_stylesheet, get_status_colors
+from .ui_utils import (
+    get_screen_size,
+    get_sidebar_width,
+    get_responsive_spacing,
+)
 
 
 class OptionsTitanMainWindow(QMainWindow):
@@ -42,29 +47,35 @@ class OptionsTitanMainWindow(QMainWindow):
     
     def setup_ui(self):
         """Create the main dashboard layout"""
-        
-        # Set window properties
         title_suffix = " (LLAMA AI Enhanced)" if self.llama_enabled else ""
         self.setWindowTitle(f"OptionsTitan - AI Options Strategy Dashboard{title_suffix}")
-        # Open window maximized to utilize full screen
+
+        # Responsive window sizing
+        width, height = get_screen_size()
+        win_w = max(1100, min(1800, int(width * 0.92)))
+        win_h = max(650, min(1200, int(height * 0.9)))
+        self.resize(win_w, win_h)
+        self.setMinimumSize(1100, 650)
+        self.move(max(0, (width - win_w) // 2), max(0, (height - win_h) // 2))
         self.showMaximized()
-        
-        # Central widget
+
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        
-        # Main horizontal layout (dashboard style)
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        
-        # Left sidebar - Control Panel (fixed width)
+
+        # Left sidebar - responsive width
+        sidebar_w = get_sidebar_width()
+        margins = max(16, min(28, int(width * 0.012)))
+        spacing = get_responsive_spacing()
+
         left_sidebar = QWidget()
         left_sidebar.setProperty("sidebar", True)
-        left_sidebar.setFixedWidth(450)
+        left_sidebar.setFixedWidth(sidebar_w)
         left_sidebar_layout = QVBoxLayout(left_sidebar)
-        left_sidebar_layout.setContentsMargins(25, 25, 25, 25)
-        left_sidebar_layout.setSpacing(20)
+        left_sidebar_layout.setContentsMargins(margins, margins, margins, margins)
+        left_sidebar_layout.setSpacing(spacing)
         
         # Dashboard title
         title_label = QLabel("🚀 OptionsTitan")
@@ -78,8 +89,7 @@ class OptionsTitanMainWindow(QMainWindow):
         subtitle_label.setAlignment(Qt.AlignLeft)
         left_sidebar_layout.addWidget(subtitle_label)
         
-        # Spacer
-        left_sidebar_layout.addSpacing(10)
+        left_sidebar_layout.addSpacing(max(6, spacing // 2))
         
         # Input panel (now compact for sidebar)
         self.input_panel = InputPanel()
@@ -96,33 +106,25 @@ class OptionsTitanMainWindow(QMainWindow):
         # Right panel - Results Dashboard
         results_container = QWidget()
         results_container_layout = QVBoxLayout(results_container)
-        results_container_layout.setContentsMargins(25, 25, 25, 25)
-        results_container_layout.setSpacing(15)
+        results_container_layout.setContentsMargins(margins, margins, margins, margins)
+        results_container_layout.setSpacing(spacing)
         
-        # Results header with export buttons
+        # Results header
         header_layout = QHBoxLayout()
-        
         results_header = QLabel("Analysis Results")
         results_header.setProperty("section_header", True)
         header_layout.addWidget(results_header)
-        
         header_layout.addStretch()
-        
-        # Export buttons in header
+
         from PySide6.QtWidgets import QPushButton
-        
-        export_txt_btn = QPushButton("📄 Export as Text")
-        export_txt_btn.setProperty("secondary", True)
-        export_txt_btn.setMinimumHeight(40)
-        export_txt_btn.clicked.connect(lambda: self.on_export_requested('txt'))
-        header_layout.addWidget(export_txt_btn)
-        
-        export_html_btn = QPushButton("🌐 Export as HTML")
-        export_html_btn.setProperty("secondary", True)
-        export_html_btn.setMinimumHeight(40)
-        export_html_btn.clicked.connect(lambda: self.on_export_requested('html'))
-        header_layout.addWidget(export_html_btn)
-        
+        export_h = max(32, min(44, int(height * 0.04)))
+        for fmt, label in [('txt', 'Export TXT'), ('html', 'Export HTML')]:
+            btn = QPushButton(label)
+            btn.setProperty("secondary", True)
+            btn.setMinimumHeight(export_h)
+            btn.clicked.connect(lambda checked, f=fmt: self.on_export_requested(f))
+            header_layout.addWidget(btn)
+
         results_container_layout.addLayout(header_layout)
         
         self.results_widget = ResultsWidget()
@@ -201,8 +203,10 @@ class OptionsTitanMainWindow(QMainWindow):
         self.status_bar.addPermanentWidget(self.llama_label)
     
     def apply_theme(self):
-        """Apply the dark theme stylesheet"""
-        stylesheet = get_dark_theme_stylesheet()
+        """Apply DPI-aware dark theme stylesheet"""
+        from .ui_utils import get_dpi_scale_factor
+        scale = get_dpi_scale_factor()
+        stylesheet = get_dark_theme_stylesheet(scale)
         self.setStyleSheet(stylesheet)
     
     @Slot(str, str)
