@@ -4,6 +4,12 @@
 
 **OptionsTitan uses FREE, open-source data (philippdubach/options-data)** with comprehensive coverage, 17+ years of history, and zero setup friction.
 
+- **Free** – No subscriptions or API keys  
+- **No-auth** – Zero setup, works out of the box  
+- **Long history** – 2008–2025 (17+ years)  
+- **Parquet** – Columnar format, lazy scans  
+- **Lazy scans** – Predicate pushdown, no full downloads
+
 ### Why This Is Better
 
 | Feature | Paid Services | philippdubach (Current) |
@@ -54,21 +60,22 @@
    - Liquidity and spread filters
 
 6. **Data Fetcher** (`src/data_collection/data_fetcher.py`)
-   - ⚠️ **DEPRECATED**: Legacy code for paid API services
-   - ✅ **Use instead**: `remote_query.py` for FREE data
-   - Dataset metadata tracking
+   - ✅ Parquet pipeline: `load_options_slice` → `load_underlying_slice` → normalizer → write Parquet
+   - Resumable checkpoints in `data/cache/fetcher_checkpoints/`
+   - CLI: `python -m src.data_collection.data_fetcher --start ... --end ...`
+   - Parallel workers (ThreadPoolExecutor)
 
 7. **Multi-Ticker Training** (`src/Training_MultiTicker.py`)
-   - ⚠️ *Being updated*: spy_return_5min → spy_return_1d
+   - Prefers `data/normalized` (Parquet) over `data/processed_csv`
+   - `spy_return_5min` column (daily proxy) for Training.py compatibility
    - Walk-forward validation
    - Ticker/sector features
 
 ### Documentation
 
-- **Migration Prompt**: `GPT5_IMPLEMENTATION_PROMPT.md` (comprehensive guide)
+- **Data Source Setup**: `docs/DATA_SOURCE_SETUP.md` – URLs, structure, paid alternatives
+- **Collection Guide**: `docs/DATA_COLLECTION_GUIDE.md` – Parquet workflow, catalog, lazy queries
 - **Testing**: `test_free_data_migration.py` (validation suite)
-- **Setup Guide**: `docs/DATA_SOURCE_SETUP.md` (updated)
-- **Collection Guide**: `docs/DATA_COLLECTION_GUIDE.md` (updated for free data)
 
 ### No Scripts Needed!
 
@@ -164,11 +171,13 @@ OptionsTitan/
 ├── src/
 │   ├── data_collection/          # FREE Data collection infrastructure
 │   │   ├── __init__.py
-│   │   ├── config.py              # PARQUET_CONFIG, query filters, 104 tickers
-│   │   ├── remote_query.py       # DuckDB/Polars remote queries (NEW)
-│   │   ├── schema_contract.py    # Schema validation (NEW)
-│   │   ├── corporate_actions.py  # Split validation (NEW)
-│   │   ├── data_fetcher.py       # Multi-ticker orchestration (legacy)
+│   │   ├── config.py              # PARQUET_CONFIG, PARQUET_DATASET
+│   │   ├── dataset_catalog.py     # Ticker discovery from _catalog.parquet
+│   │   ├── parquet_query.py      # load_options_slice, load_underlying_slice
+│   │   ├── remote_query.py       # DuckDB/Polars remote queries
+│   │   ├── schema_contract.py    # Schema validation
+│   │   ├── corporate_actions.py  # Split validation
+│   │   ├── data_fetcher.py       # Parquet pipeline (resumable, parallel)
 │   │   └── data_normalizer.py    # Schema transformation
 │   ├── Training.py                # Original single-ticker training
 │   └── Training_MultiTicker.py    # Multi-ticker with walk-forward validation

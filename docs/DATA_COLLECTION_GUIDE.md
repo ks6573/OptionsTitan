@@ -64,6 +64,48 @@ print(f"Retrieved {len(df):,} contracts")
 
 ---
 
+## Parquet Dataset Workflow
+
+### Catalog & Lazy Queries
+
+OptionsTitan uses the philippdubach dataset with **lazy queries** (no full downloads):
+
+1. **Dataset Catalog** (`src/data_collection/dataset_catalog.py`)
+   - `get_available_dataset_tickers()`: Loads tickers from `_catalog.parquet` or cached JSON
+   - `has_dataset_coverage(symbol)`: Check if a symbol has options history
+   - Cache: `data/cache/dataset_tickers.json` (7-day TTL)
+
+2. **Parquet Query Layer** (`src/data_collection/parquet_query.py`)
+   - `load_options_slice()`: Filter by date, DTE, moneyness, liquidity
+   - `load_underlying_slice()`: Underlying OHLC for a date range
+   - Thin wrapper over `remote_query` with schema-aware filters
+
+3. **Normalized Output**
+   - Data fetcher writes to `data/normalized/ticker={TICKER}/year={YYYY}/part-*.parquet`
+   - Schema: `REQUIRED_COLUMNS` (price, option_price, strike_distance, etc.)
+   - Training pipeline prefers `data/normalized` over `data/processed_csv`
+
+### Data Fetcher CLI
+
+Collect normalized data without full downloads:
+
+```bash
+python -m src.data_collection.data_fetcher --start 2019-01-01 --end 2024-12-31
+
+# Specific tickers
+python -m src.data_collection.data_fetcher --start 2019-01-01 --end 2024-12-31 --tickers SPY,AAPL,TSLA
+
+# Force refresh (ignore checkpoints)
+python -m src.data_collection.data_fetcher --start 2019-01-01 --end 2024-12-31 --force-refresh
+
+# Optional: export CSV
+python -m src.data_collection.data_fetcher --start 2019-01-01 --end 2024-12-31 --export-csv
+```
+
+Resumability: checkpoints in `data/cache/fetcher_checkpoints/`; skip completed ticker/year unless `--force-refresh`.
+
+---
+
 ## Available Tickers (104 Total)
 
 The dataset includes all major US equities and ETFs:
@@ -88,7 +130,7 @@ WMT, COST, TGT, DIS, NKE, MCD, SBUX, KO, PEP
 
 ### And many more...
 
-[Full list in src/data_collection/remote_query.py](../src/data_collection/remote_query.py)
+[Full list from `get_available_dataset_tickers()` in src/data_collection/dataset_catalog.py](../src/data_collection/dataset_catalog.py)
 
 ---
 
@@ -367,7 +409,7 @@ volume                     → volume
 implied_volatility         → implied_volatility
 underlying close           → price
 VIX close                  → vix_level
-daily returns              → spy_return_1d (was spy_return_5min)
+daily SPY close-to-close   → spy_return_5min (daily proxy; Training.py expects this column)
 RSI(14)                    → rsi
 date                       → timestamp
 ```
@@ -402,7 +444,7 @@ pip install duckdb
 **Check:**
 1. Date range within 2008-2025
 2. Ticker is lowercase (e.g., "spy" not "SPY")
-3. Ticker exists in AVAILABLE_TICKERS list
+3. Ticker in dataset: `from src.data_collection.dataset_catalog import has_dataset_coverage; has_dataset_coverage("spy")`
 4. Internet connection working
 
 **Debug:**
@@ -680,7 +722,7 @@ for era_name, (start, end) in eras.items():
 
 **Issues with queries:**
 - Check terminal logs for detailed errors
-- Validate ticker is in AVAILABLE_TICKERS list
+- Validate ticker: `has_dataset_coverage(symbol)` from `dataset_catalog`
 - Ensure date range is within 2008-2025
 
 **Issues with data quality:**
