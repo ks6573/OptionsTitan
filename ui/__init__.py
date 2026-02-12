@@ -6,15 +6,26 @@ PySide6 GUI components for the Options Strategy Analyzer
 __version__ = "2.0.0"
 __author__ = "OptionsTitan"
 
-# Make key classes available at package level
-from .main_window import OptionsTitanMainWindow
-from .input_panel import InputPanel
-from .results_widget import ResultsWidget
-from .workers import AnalysisWorker
-
 __all__ = [
-    'OptionsTitanMainWindow',
-    'InputPanel',
-    'ResultsWidget',
-    'AnalysisWorker',
+    "OptionsTitanMainWindow",
+    "InputPanel",
+    "ResultsWidget",
+    "AnalysisWorker",
 ]
+
+
+def __getattr__(name):
+    """Lazy-load Qt-dependent modules so tests can import ui.analyzer without PySide6."""
+    if name == "OptionsTitanMainWindow":
+        from .main_window import OptionsTitanMainWindow
+        return OptionsTitanMainWindow
+    if name == "InputPanel":
+        from .input_panel import InputPanel
+        return InputPanel
+    if name == "ResultsWidget":
+        from .results_widget import ResultsWidget
+        return ResultsWidget
+    if name == "AnalysisWorker":
+        from .workers import AnalysisWorker
+        return AnalysisWorker
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

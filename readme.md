@@ -85,6 +85,16 @@ python src/Training_MultiTicker.py
 
 ---
 
+## Testing
+
+Run the pytest suite (install dev deps first: `uv sync --all-extras` or `pip install -e ".[dev]"`):
+
+```bash
+pytest tests/
+```
+
+---
+
 ## Documentation
 
 - [GETTING_STARTED.md](GETTING_STARTED.md) - Setup
