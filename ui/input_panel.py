@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout,
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLineEdit, QDoubleSpinBox, QComboBox, QPushButton,
     QGroupBox, QLabel, QCompleter
 )
@@ -26,13 +26,13 @@ def _responsive_values():
         )
         width, height = get_screen_size()
         spacing = get_responsive_spacing()
-        analyze_h = max(42, min(60, int(height * 0.055)))
-        secondary_h = max(32, min(50, int(height * 0.045)))
-        chip_w = max(42, min(60, int(width * 0.028)))
+        analyze_h = max(46, min(64, int(height * 0.058)))
+        secondary_h = max(38, min(52, int(height * 0.048)))
+        chip_w = max(52, min(72, int(width * 0.032)))
         margins = max(16, min(28, int(width * 0.012)))
         return spacing, analyze_h, secondary_h, chip_w, margins
     except Exception:
-        return 16, 50, 40, 50, 20
+        return 18, 54, 46, 54, 24
 
 # Favorites for Quick Select
 FAVORITES = ["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "TSLA", "NVDA", "META", "AMD"]
@@ -149,11 +149,11 @@ class InputPanel(QWidget):
             from .ui_utils import get_responsive_font_size
             fs = get_responsive_font_size('small')
             self.coverage_badge.setStyleSheet(
-                f"font-size: {fs}px; padding: 4px 8px; border-radius: 4px;"
+                f"font-size: {fs}px; padding: 6px 10px; border-radius: 4px;"
             )
         except Exception:
             self.coverage_badge.setStyleSheet(
-                "font-size: 11px; padding: 4px 8px; border-radius: 4px;"
+                "font-size: 13px; padding: 6px 10px; border-radius: 4px;"
             )
         self.coverage_badge.setToolTip(
             "Options history available: Dataset has historical options data.\n"
@@ -162,27 +162,30 @@ class InputPanel(QWidget):
         symbol_row.addWidget(self.coverage_badge)
         input_layout.addLayout(symbol_row)
 
-        # Quick Select chips
+        # Quick Select chips (2 rows of 4 to fit sidebar, with spacing)
         quick_label = QLabel("Quick Select")
         quick_label.setProperty("input_label", True)
         try:
             from .ui_utils import get_responsive_font_size
             fs = get_responsive_font_size('body')
-            quick_label.setStyleSheet(f"font-size: {fs}px; margin-top: 4px;")
+            quick_label.setStyleSheet(f"font-size: {fs}px; margin-top: 6px; margin-bottom: 4px;")
         except Exception:
-            quick_label.setStyleSheet("font-size: 12px; margin-top: 4px;")
+            quick_label.setStyleSheet("font-size: 14px; margin-top: 6px; margin-bottom: 4px;")
         input_layout.addWidget(quick_label)
-        chips_layout = QHBoxLayout()
-        chips_layout.setSpacing(max(4, spacing // 3))
-        for fav in FAVORITES[:8]:
+
+        chip_spacing = max(10, spacing // 2)
+        chips_layout = QGridLayout()
+        chips_layout.setHorizontalSpacing(chip_spacing)
+        chips_layout.setVerticalSpacing(chip_spacing)
+        for i, fav in enumerate(FAVORITES[:8]):
             btn = QPushButton(fav)
             btn.setMinimumWidth(chip_w)
-            btn.setMaximumWidth(chip_w + 12)
+            btn.setMinimumHeight(max(34, secondary_h - 6))
             btn.setProperty("chip", True)
             btn.setCursor(Qt.PointingHandCursor)
             btn.clicked.connect(lambda checked, s=fav: self._set_symbol(s))
-            chips_layout.addWidget(btn)
-        chips_layout.addStretch()
+            row, col = i // 4, i % 4
+            chips_layout.addWidget(btn, row, col)
         input_layout.addLayout(chips_layout)
 
         # Portfolio Liquidity
@@ -313,8 +316,8 @@ class InputPanel(QWidget):
             from .ui_utils import get_responsive_font_size
             fs = get_responsive_font_size('small')
         except Exception:
-            fs = 11
-        base_css = f"font-size: {fs}px; padding: 4px 8px; border-radius: 4px;"
+            fs = 13
+        base_css = f"font-size: {fs}px; padding: 6px 10px; border-radius: 4px;"
         if has_coverage:
             self.coverage_badge.setText("Options history available")
             self.coverage_badge.setStyleSheet(
@@ -332,8 +335,8 @@ class InputPanel(QWidget):
             from .ui_utils import get_responsive_font_size
             fs = get_responsive_font_size('small')
         except Exception:
-            fs = 11
-        self.coverage_badge.setStyleSheet(f"font-size: {fs}px; padding: 4px 8px;")
+            fs = 13
+        self.coverage_badge.setStyleSheet(f"font-size: {fs}px; padding: 6px 10px;")
 
     def on_analyze_clicked(self):
         symbol = self.symbol_combo.currentText().strip().upper()

@@ -29,22 +29,17 @@ def get_dark_theme_stylesheet(dpi_scale: float = None) -> str:
     fs_title = get_responsive_font_size('title')
     fs_subtitle = get_responsive_font_size('subheading')
     fs_heading = get_responsive_font_size('heading')
-    fs_input = get_responsive_font_size('body') + 1
+    fs_input = fs_body + 2
     fs_small = get_responsive_font_size('small')
-    fs_button = max(11, fs_body)
+    fs_button = max(13, fs_body)
 
-    # Spacing
+    # Spacing (generous for readability)
     base_spacing = get_responsive_spacing()
-    pad_sm = _scale(8, scale)
-    pad_md = _scale(12, scale)
-    pad_lg = _scale(16, scale)
-    radius = _scale(6, scale)
-    radius_lg = _scale(8, scale)
-
-    # Compact mode adjustments
-    if width < 1440:
-        fs_title = int(fs_title * 0.85)
-        pad_lg = _scale(12, scale)
+    pad_sm = _scale(10, scale)
+    pad_md = _scale(14, scale)
+    pad_lg = _scale(20, scale)
+    radius = _scale(8, scale)
+    radius_lg = _scale(10, scale)
 
     return f"""
         QMainWindow {{ background-color: #1e1e1e; }}
@@ -113,7 +108,7 @@ def get_dark_theme_stylesheet(dpi_scale: float = None) -> str:
             padding: {pad_md}px {pad_lg}px;
             color: #ffffff;
             font-size: {fs_input}px;
-            min-height: {_scale(32, scale)}px;
+            min-height: {_scale(40, scale)}px;
         }}
 
         QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
@@ -153,7 +148,7 @@ def get_dark_theme_stylesheet(dpi_scale: float = None) -> str:
             padding: {pad_sm}px {pad_lg}px;
             font-size: {fs_button}px;
             font-weight: bold;
-            min-height: {_scale(32, scale)}px;
+            min-height: {_scale(40, scale)}px;
         }}
 
         QPushButton:hover {{ background-color: #005a9e; }}
@@ -175,7 +170,9 @@ def get_dark_theme_stylesheet(dpi_scale: float = None) -> str:
         QPushButton[chip="true"] {{
             background-color: #2d2d2d;
             color: #b0b0b0;
-            font-size: {fs_small}px;
+            font-size: {fs_body}px;
+            padding: {pad_sm}px {pad_md}px;
+            font-weight: 500;
         }}
         QPushButton[chip="true"]:hover {{
             background-color: #3d3d3d;
@@ -215,9 +212,9 @@ def get_dark_theme_stylesheet(dpi_scale: float = None) -> str:
             border-bottom: none;
             border-top-left-radius: {radius_lg}px;
             border-top-right-radius: {radius_lg}px;
-            padding: {pad_md}px {_scale(20, scale)}px;
-            margin-right: 3px;
-            min-width: {_scale(90, scale)}px;
+            padding: {pad_md}px {_scale(24, scale)}px;
+            margin-right: 4px;
+            min-width: {_scale(110, scale)}px;
             font-size: {fs_input}px;
             font-weight: 500;
         }}
@@ -339,6 +336,54 @@ def get_dark_theme_stylesheet(dpi_scale: float = None) -> str:
 
         QMessageBox {{ background-color: #1e1e1e; }}
         QMessageBox QLabel {{ color: #ffffff; }}
+
+        QFrame[kpi_card="true"] {{
+            background-color: #2d2d2d;
+            border: 1px solid #3d3d3d;
+            border-left: 4px solid #0078d4;
+            border-radius: {radius_lg}px;
+            padding: {pad_sm}px {pad_md}px;
+        }}
+
+        QFrame[dashboard_card="true"] {{
+            background-color: #2d2d2d;
+            border: 2px solid #3d3d3d;
+            border-radius: {radius_lg}px;
+        }}
+
+        QFrame[cta_card="true"] {{
+            background-color: #252525;
+            border: 2px solid #0078d4;
+            border-radius: {radius_lg}px;
+            min-width: {_scale(320, scale)}px;
+        }}
+
+        QLabel#ctaLabel {{
+            font-size: {int(fs_title * 1.1)}px;
+            font-weight: bold;
+            color: #0078d4;
+        }}
+
+        QLabel[subtitle="true"] {{
+            font-size: {fs_subtitle}px;
+            color: #b0b0b0;
+            margin-top: {pad_sm}px;
+        }}
+
+        QLabel[feature_title="true"] {{
+            font-size: {fs_heading}px;
+            font-weight: 600;
+            color: #ffffff;
+        }}
+
+        QLabel[feature_desc="true"] {{
+            font-size: {fs_small}px;
+            color: #b0b0b0;
+        }}
+
+        QFrame[feature_card="true"] {{
+            min-width: {_scale(180, scale)}px;
+        }}
     """
 
 

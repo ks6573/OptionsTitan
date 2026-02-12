@@ -35,7 +35,7 @@ def build_price_chart(price_history, symbol: str) -> QChartView:
     chart.setTitleBrush(QColor("#ffffff"))
 
     title_font = QFont()
-    title_font.setPixelSize(max(10, int(min_h / 18)))
+    title_font.setPixelSize(max(14, int(min_h / 14)))
     title_font.setBold(True)
     chart.setTitleFont(title_font)
 
@@ -56,7 +56,7 @@ def build_price_chart(price_history, symbol: str) -> QChartView:
     axis_x.setFormat("MMM d")
     axis_x.setLabelsColor(QColor("#b0b0b0"))
     axis_font = QFont()
-    axis_font.setPixelSize(max(8, int(min_h / 22)))
+    axis_font.setPixelSize(max(11, int(min_h / 16)))
     axis_x.setLabelsFont(axis_font)
     chart.addAxis(axis_x, Qt.AlignBottom)
     series.attachAxis(axis_x)
@@ -107,7 +107,7 @@ def build_fit_score_chart(strategies: list) -> QChartView:
     chart.setTitleBrush(QColor("#ffffff"))
 
     title_font = QFont()
-    title_font.setPixelSize(max(10, int(min_h / 18)))
+    title_font.setPixelSize(max(14, int(min_h / 14)))
     title_font.setBold(True)
     chart.setTitleFont(title_font)
 
@@ -139,7 +139,7 @@ def build_fit_score_chart(strategies: list) -> QChartView:
     axis_y.append(categories)
     axis_y.setLabelsColor(QColor("#b0b0b0"))
     axis_font = QFont()
-    axis_font.setPixelSize(max(9, int(min_h / 20)))
+    axis_font.setPixelSize(max(11, int(min_h / 16)))
     axis_y.setLabelsFont(axis_font)
     chart.addAxis(axis_y, Qt.AlignLeft)
     series.attachAxis(axis_y)
@@ -182,8 +182,14 @@ def build_fit_score_chart(strategies: list) -> QChartView:
 class ChartsWidget(QWidget):
     """Container for price and strategy fit charts."""
 
-    def __init__(self):
+    def __init__(self, vertical_layout=False):
+        """
+        Args:
+            vertical_layout: If True, stack charts vertically (full width each).
+                            Use for dedicated Charts tab to avoid label truncation.
+        """
         super().__init__()
+        self.vertical_layout = vertical_layout
         self.layout = QVBoxLayout(self)
         try:
             from .ui_utils import get_responsive_spacing
@@ -212,35 +218,41 @@ class ChartsWidget(QWidget):
             placeholder = QLabel("📈 Charts will appear here after analysis")
             placeholder.setAlignment(Qt.AlignCenter)
             fs = max(11, int(min_h / 12))
-            placeholder.setStyleSheet(f"color: #666; font-size: {fs}px; padding: 24px;")
+            placeholder.setStyleSheet(f"color: #666; font-size: {max(14, fs)}px; padding: 28px;")
             placeholder.setMinimumHeight(min_h)
             self.layout.addWidget(placeholder)
             return
 
-        charts_layout = QHBoxLayout()
+        charts_layout = QVBoxLayout() if self.vertical_layout else QHBoxLayout()
         charts_layout.setSpacing(_spacing())
 
         price_history = stock_data.get('price_history') if stock_data else None
-        min_h, _ = _get_chart_heights()
+        min_h, max_h = _get_chart_heights()
+        # Vertical layout: give each chart more height; horizontal: use min_h
+        chart_h = max_h if self.vertical_layout else min_h
 
         if price_history is not None and not price_history.empty:
             self.price_chart = build_price_chart(price_history, stock_data['symbol'])
-            charts_layout.addWidget(self.price_chart, 3)
+            if self.vertical_layout:
+                self.price_chart.setMinimumHeight(max(min_h, int(chart_h * 0.6)))
+            charts_layout.addWidget(self.price_chart, 1 if self.vertical_layout else 3)
         else:
             ph = QLabel("Price chart unavailable")
             ph.setAlignment(Qt.AlignCenter)
-            ph.setStyleSheet(f"color: #666; font-size: {max(10, int(min_h/18))}px;")
+            ph.setStyleSheet(f"color: #666; font-size: {max(14, int(min_h/14))}px;")
             ph.setMinimumHeight(min_h)
-            charts_layout.addWidget(ph, 3)
+            charts_layout.addWidget(ph, 1 if self.vertical_layout else 3)
 
         if strategies:
             self.fit_chart = build_fit_score_chart(strategies)
-            charts_layout.addWidget(self.fit_chart, 2)
+            if self.vertical_layout:
+                self.fit_chart.setMinimumHeight(max(min_h, int(chart_h * 0.55)))
+            charts_layout.addWidget(self.fit_chart, 1 if self.vertical_layout else 2)
         else:
             ph2 = QLabel("Strategy fit scores")
             ph2.setAlignment(Qt.AlignCenter)
-            ph2.setStyleSheet(f"color: #666; font-size: {max(10, int(min_h/18))}px;")
+            ph2.setStyleSheet(f"color: #666; font-size: {max(14, int(min_h/14))}px;")
             ph2.setMinimumHeight(min_h)
-            charts_layout.addWidget(ph2, 2)
+            charts_layout.addWidget(ph2, 1 if self.vertical_layout else 2)
 
         self.layout.addLayout(charts_layout)

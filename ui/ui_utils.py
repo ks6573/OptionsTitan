@@ -52,22 +52,22 @@ def get_responsive_font_size(role: str) -> int:
     """Pixel font size for text roles (scaled by DPI + screen)."""
     scale = get_dpi_scale_factor()
     width, _ = get_screen_size()
-    # Adjust base for screen size
+    # Adjust base for screen size (generous minimums for readability)
     if width < 1440:
-        base = 9
+        base = 12
     elif width < 1920:
-        base = 10
+        base = 13
     else:
-        base = 11
+        base = 14
     base = int(base * scale)
     sizes = {
-        'title': int(base * 2.5),
-        'heading': int(base * 1.8),
-        'subheading': int(base * 1.4),
+        'title': int(base * 2.2),
+        'heading': int(base * 1.6),
+        'subheading': int(base * 1.25),
         'body': base,
-        'small': int(base * 0.85),
+        'small': int(base * 0.9),
     }
-    return max(8, sizes.get(role, base))
+    return max(11, sizes.get(role, base))
 
 
 def get_layout_mode() -> str:
@@ -83,7 +83,7 @@ def get_layout_mode() -> str:
 def get_responsive_spacing() -> int:
     """Base spacing in pixels for layout."""
     _, height = get_screen_size()
-    return max(10, min(24, int(height * 0.015)))
+    return max(14, min(28, int(height * 0.02)))
 
 
 def get_sidebar_width() -> int:

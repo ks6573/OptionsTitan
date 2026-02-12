@@ -15,6 +15,7 @@ import os
 
 from .input_panel import InputPanel
 from .results_widget import ResultsWidget
+from .kpi_cards import KPIStrip
 from .workers import AnalysisWorker
 from .styles import get_dark_theme_stylesheet, get_status_colors
 from .ui_utils import (
@@ -117,7 +118,7 @@ class OptionsTitanMainWindow(QMainWindow):
         header_layout.addStretch()
 
         from PySide6.QtWidgets import QPushButton
-        export_h = max(32, min(44, int(height * 0.04)))
+        export_h = max(40, min(52, int(height * 0.048)))
         for fmt, label in [('txt', 'Export TXT'), ('html', 'Export HTML')]:
             btn = QPushButton(label)
             btn.setProperty("secondary", True)
@@ -126,7 +127,10 @@ class OptionsTitanMainWindow(QMainWindow):
             header_layout.addWidget(btn)
 
         results_container_layout.addLayout(header_layout)
-        
+
+        self.kpi_strip = KPIStrip()
+        results_container_layout.addWidget(self.kpi_strip)
+
         self.results_widget = ResultsWidget()
         results_container_layout.addWidget(self.results_widget)
         
@@ -265,12 +269,14 @@ class OptionsTitanMainWindow(QMainWindow):
     @Slot()
     def on_clear_requested(self):
         """Handle clear results request"""
+        self.kpi_strip.clear_data()
         self.results_widget.clear_results()
         self.update_status("Results cleared - ready for new analysis")
     
     @Slot(dict, list)
     def on_analysis_complete(self, stock_data, strategies):
         """Handle successful analysis completion"""
+        self.kpi_strip.set_data(stock_data, strategies)
         self.results_widget.display_results(stock_data, strategies)
         has_coverage = self.input_panel.has_dataset_coverage()
         if has_coverage:

@@ -5,7 +5,8 @@ Tabbed interface for displaying analysis results
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTabWidget,
-    QTextEdit, QLabel, QScrollArea
+    QTextEdit, QLabel, QScrollArea, QGridLayout, QFrame,
+    QStackedWidget
 )
 from PySide6.QtCore import Qt, Signal
 from datetime import datetime
@@ -37,12 +38,16 @@ class ResultsWidget(QTabWidget):
         # Tab 1: Overview
         self.overview_tab = self.create_overview_tab()
         self.addTab(self.overview_tab, "📊 Overview")
+
+        # Tab 2: Charts (dedicated tab - full width to avoid squishing)
+        self.charts_tab = self.create_charts_tab()
+        self.addTab(self.charts_tab, "📈 Charts")
         
-        # Tab 2: Strategies
+        # Tab 3: Strategies
         self.strategies_tab = self.create_strategies_tab()
         self.addTab(self.strategies_tab, "🎯 Strategies")
         
-        # Tab 3: AI Insights
+        # Tab 4: AI Insights
         self.ai_tab = self.create_ai_insights_tab()
         self.addTab(self.ai_tab, "🤖 AI Insights")
         
@@ -50,25 +55,122 @@ class ResultsWidget(QTabWidget):
         self.show_welcome_message()
     
     def create_overview_tab(self):
-        """Create the overview tab with charts + market data"""
+        """Create the overview tab with dashboard grid layout and welcome state"""
         tab = QWidget()
         layout = QVBoxLayout(tab)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.overview_stack = QStackedWidget()
+
+        # Page 0: Dashboard welcome state
+        welcome_page = self.create_welcome_page()
+        self.overview_stack.addWidget(welcome_page)
+
+        # Page 1: Results (report only - charts moved to dedicated tab)
+        results_page = QWidget()
+        layout_results = QVBoxLayout(results_page)
         try:
             from .ui_utils import get_responsive_spacing, get_screen_percentage_height
-            layout.setSpacing(get_responsive_spacing())
+            spacing = get_responsive_spacing()
             text_min_h = max(220, int(get_screen_percentage_height(0.28)))
         except Exception:
-            layout.setSpacing(16)
+            spacing = 16
             text_min_h = 280
 
-        self.charts_widget = ChartsWidget()
-        layout.addWidget(self.charts_widget)
+        layout_results.setSpacing(spacing)
+
+        report_frame = QFrame()
+        report_frame.setProperty("dashboard_card", True)
+        report_layout = QVBoxLayout(report_frame)
+        report_layout.setContentsMargins(16, 16, 16, 16)
 
         self.overview_text = QTextEdit()
         self.overview_text.setReadOnly(True)
         self.overview_text.setMinimumHeight(text_min_h)
-        layout.addWidget(self.overview_text)
+        report_layout.addWidget(self.overview_text)
 
+        layout_results.addWidget(report_frame)
+        self.overview_stack.addWidget(results_page)
+
+        layout.addWidget(self.overview_stack)
+        return tab
+
+    def create_welcome_page(self):
+        """Create dashboard-style empty state with Get Started and feature cards"""
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        try:
+            from .ui_utils import get_responsive_spacing, get_screen_percentage_height
+            spacing = get_responsive_spacing()
+        except Exception:
+            spacing = 16
+        layout.setSpacing(spacing)
+        layout.setContentsMargins(24, 24, 24, 24)
+
+        # Central Get Started card
+        cta_card = QFrame()
+        cta_card.setProperty("dashboard_card", True)
+        cta_card.setProperty("cta_card", True)
+        cta_layout = QVBoxLayout(cta_card)
+        cta_layout.setContentsMargins(32, 32, 32, 32)
+
+        cta_label = QLabel("Enter a symbol and click Analyze")
+        cta_label.setObjectName("ctaLabel")
+        cta_label.setAlignment(Qt.AlignCenter)
+        cta_layout.addWidget(cta_label)
+
+        cta_hint = QLabel("Get personalized options strategy recommendations in seconds")
+        cta_hint.setProperty("subtitle", True)
+        cta_hint.setAlignment(Qt.AlignCenter)
+        cta_layout.addWidget(cta_hint)
+
+        layout.addWidget(cta_card, alignment=Qt.AlignCenter)
+
+        # Feature cards row
+        features_grid = QHBoxLayout()
+        features_grid.setSpacing(spacing)
+
+        features = [
+            ("🎯", "Top 5 Strategies", "Strategies ranked by fit score"),
+            ("📈", "Charts Tab", "Price history & fit scores, full width"),
+            ("🤖", "AI Insights", "LLAMA-powered analysis when configured"),
+        ]
+        for emoji, title, desc in features:
+            card = QFrame()
+            card.setProperty("dashboard_card", True)
+            card.setProperty("feature_card", True)
+            card_layout = QVBoxLayout(card)
+            card_layout.setContentsMargins(20, 20, 20, 20)
+
+            emoji_label = QLabel(emoji)
+            emoji_label.setAlignment(Qt.AlignCenter)
+            card_layout.addWidget(emoji_label)
+
+            title_label = QLabel(title)
+            title_label.setProperty("feature_title", True)
+            title_label.setAlignment(Qt.AlignCenter)
+            card_layout.addWidget(title_label)
+
+            desc_label = QLabel(desc)
+            desc_label.setProperty("feature_desc", True)
+            desc_label.setAlignment(Qt.AlignCenter)
+            desc_label.setWordWrap(True)
+            card_layout.addWidget(desc_label)
+
+            features_grid.addWidget(card)
+
+        layout.addLayout(features_grid)
+
+        layout.addStretch()
+        return page
+
+    def create_charts_tab(self):
+        """Dedicated tab for charts - stacked vertically for full-width display."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.charts_widget = ChartsWidget(vertical_layout=True)
+        layout.addWidget(self.charts_widget)
         return tab
     
     def create_strategies_tab(self):
@@ -111,22 +213,9 @@ class ResultsWidget(QTabWidget):
         return tab
     
     def show_welcome_message(self):
-        """Display welcome message before analysis"""
-        welcome = """
-OPTIONSTITAN — Strategy Analyzer
-
-Enter a stock symbol, set your risk parameters, and click "Analyze Strategies"
-to get personalized options strategy recommendations.
-
-  • Top 5 strategies ranked by fit score
-  • Setup instructions and risk/reward analysis
-  • Market condition alignment
-  • AI insights (when LLAMA API key is configured)
-
-⚠️  For educational purposes only. Options involve substantial risk.
-    Consult a financial advisor before trading.
-"""
-        self.overview_text.setPlainText(welcome.strip())
+        """Display dashboard welcome state before analysis"""
+        self.overview_stack.setCurrentIndex(0)
+        self.overview_text.setPlainText("")
         self.ai_insights_text.setPlainText(
             "AI insights will appear here after you run an analysis.\n\n"
             "Configure LLAMA_API_KEY in .env to enable AI-powered commentary."
@@ -136,6 +225,7 @@ to get personalized options strategy recommendations.
         """Display analysis results across all tabs"""
         self.stock_data = stock_data
         self.strategies = strategies
+        self.overview_stack.setCurrentIndex(1)
 
         # Update charts (price + fit scores)
         self.charts_widget.update_charts(stock_data, strategies)
@@ -305,10 +395,23 @@ AI market insights not available. Ensure LLAMA_API_KEY is configured.
 
 """
             else:
-                ai_text += f"""
+                # Fallback: use built-in reasoning when LLAMA AI is not available
+                built_in = strategy.get('reasoning', [])
+                if built_in:
+                    reasoning_text = "\n".join(f"  • {line}" for line in built_in)
+                    ai_text += f"""
 {i}. {strategy['name']}
 ───────────────────────────────────────────────────────────────────────────────
-AI reasoning not available for this strategy.
+Built-in analysis (configure LLAMA_API_KEY for AI-powered insights):
+
+{reasoning_text}
+
+"""
+                else:
+                    ai_text += f"""
+{i}. {strategy['name']}
+───────────────────────────────────────────────────────────────────────────────
+Configure LLAMA_API_KEY in .env for AI-powered reasoning. See LLAMA_AI_SETUP.md.
 
 """
         
@@ -343,6 +446,8 @@ AI reasoning not available for this strategy.
     
     def clear_results(self):
         """Clear all results and show welcome message"""
+        self.stock_data = None
+        self.strategies = None
         self.show_welcome_message()
         self.charts_widget.update_charts(None, [])
 

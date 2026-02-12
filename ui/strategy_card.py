@@ -17,7 +17,7 @@ def _base_font_size():
         from .ui_utils import get_responsive_font_size
         return get_responsive_font_size('body')
     except Exception:
-        return 11
+        return 13
 
 
 class StrategyCard(QFrame):
